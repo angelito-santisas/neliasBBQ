@@ -1,0 +1,25 @@
+<div class="ambient-bg" aria-hidden="true"></div>
+<header>
+  <a class="brand-logo" href="/" (click)="onTitleClick($event)">Nelia's BBQ</a>
+  <nav aria-label="Primary navigation">
+    <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+    <a class="nav-link" routerLink="/menu" routerLinkActive="active">Menu</a>
+    <a class="nav-link" routerLink="/about" routerLinkActive="active">About</a>
+    <a class="nav-link" routerLink="/feedback" routerLinkActive="active">Feedback</a>
+    <a class="nav-link cart-link" routerLink="/cart" routerLinkActive="active" [attr.aria-label]="'Cart, ' + cart.count() + ' items'">
+      <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M2 3h3l3 13h11l3-9H6" />
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="19" cy="21" r="1" />
+      </svg>
+      @if (cart.count() > 0) {
+        <span class="cart-badge" aria-hidden="true">{{ cart.count() }}</span>
+      }
+    </a>
+  </nav>
+</header>
+<main><router-outlet /></main>
+@if (notifications.message(); as message) {
+  <div class="toast show" role="status" aria-live="polite"><span aria-hidden="true">✦</span><span>{{ message }}</span></div>
+}
+<footer><p>&copy; 2026 Nelia's BBQ. All Rights Reserved. Artisanal Filipino Barbecue Fine Dining.</p></footer>

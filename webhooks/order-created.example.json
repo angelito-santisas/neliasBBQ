@@ -1,0 +1,13 @@
+{
+  "event": "order.created",
+  "version": 1,
+  "data": {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "items": [],
+    "subtotal": 360.00,
+    "serviceFee": 50.00,
+    "total": 410.00,
+    "status": "submitted",
+    "createdAt": "2026-09-04T12:00:00+08:00"
+  }
+}

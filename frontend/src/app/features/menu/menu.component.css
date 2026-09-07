@@ -1,0 +1,91 @@
+.menu-page { animation: none; }
+
+.category-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.category-filters button {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border-gold);
+  border-radius: 24px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.category-filters button:hover,
+.category-filters button[aria-pressed='true'] {
+  background: var(--accent-gold);
+  color: var(--bg-dark);
+}
+
+.menu-results { margin: 1.5rem 0; text-align: center; }
+.menu-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.menu-card { min-width: 0; }
+.menu-card-title { flex-wrap: wrap; gap: 0.75rem; }
+.menu-card-title h3 { font-size: 1.15rem; line-height: 1.5; overflow-wrap: anywhere; }
+.menu-card-price { white-space: nowrap; }
+.add-to-cart-btn { min-height: 48px; }
+
+.menu-quantity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--accent-gold);
+  border-radius: 4px;
+  color: var(--accent-gold);
+  min-height: 48px;
+}
+
+.menu-quantity button {
+  width: 48px;
+  min-height: 46px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.menu-quantity button:disabled { opacity: 0.4; cursor: not-allowed; }
+.category-filters button:focus-visible,
+.menu-quantity button:focus-visible,
+.mobile-cart-bar:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 4px; }
+.mobile-cart-bar { display: none; }
+
+@media (max-width: 768px) {
+  .has-cart { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+  .mobile-cart-bar {
+    position: fixed;
+    z-index: 110;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--accent-gold);
+    color: var(--bg-dark);
+    text-decoration: none;
+    box-shadow: 0 4px 24px #0008;
+    font-size: 0.85rem;
+  }
+  .mobile-cart-bar span { display: grid; gap: 0.3rem; }
+  .mobile-cart-bar small { font-size: 0.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-filters button { transition: none; }
+}
