@@ -52,7 +52,7 @@ Click the Nelia's BBQ title eight times, with no more than three seconds between
 
 Create staff accounts in Supabase Authentication and add their user UUIDs to the backend `STAFF_USER_IDS` environment variable (comma-separated). Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as shown in `.env.example`, then restart Spring Boot. An empty staff list denies all staff access. Do not use the service-role key.
 
-The API validates each staff token through Supabase Auth and checks the UUID allowlist. All `/api/v1/staff/**` endpoints require staff authorization. Sessions are held in browser memory; refresh or sign-out clears local access. Sign-out does not revoke an already issued token at Supabase. Inventory and transaction screens are still pending implementation.
+The API validates each staff token through Supabase Auth and checks the UUID allowlist. All `/api/v1/staff/**` endpoints require staff authorization. Sessions are held in browser memory; refresh or sign-out clears local access. Sign-out does not revoke an already issued token at Supabase. The staff inventory workspace supports stock visibility, low-stock alerts, item creation, and auditable received/used adjustments. Transaction management is still pending implementation.
 
 Authentication API reference: [Supabase Auth](https://github.com/supabase/auth). Deploy login over HTTPS and configure Supabase authentication rate limits before public use.
 

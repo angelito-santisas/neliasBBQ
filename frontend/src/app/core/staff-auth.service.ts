@@ -7,6 +7,7 @@ import { catchError, map, of, tap } from 'rxjs';
 export class StaffAuthService {
   private readonly http = inject(HttpClient);
   private token: string | null = null;
+  get accessToken(): string | null { return this.token; }
   login(email: string, password: string) {
     this.token = null;
     return this.http.post<{ accessToken: string }>('/api/v1/auth/login', { email, password })

@@ -17,7 +17,7 @@ import { StaffAuthService } from '../../core/staff-auth.service';
         <button class="btn btn-primary full-width" [disabled]="busy() || form.invalid">{{ busy() ? 'Signing in…' : 'Sign in' }}</button>
       </form>
     </section>`,
-  styles: `:host { display: block; } input { width: 100%; min-width: 0; padding: 1rem; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border-gold); border-radius: 4px; font: inherit; } input:focus-visible { outline: 2px solid var(--accent-gold); } h1 { overflow-wrap: anywhere; }`
+  styles: `:host { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; } .feedback-form-container { width: min(100%, 520px); } input { width: 100%; min-width: 0; padding: 1rem; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border-gold); border-radius: 4px; font: inherit; } input:focus-visible { outline: 2px solid var(--accent-gold); } h1 { overflow-wrap: anywhere; }`
 })
 export class StaffLoginComponent {
   private readonly auth = inject(StaffAuthService);

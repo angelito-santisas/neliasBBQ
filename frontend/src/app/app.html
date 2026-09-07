@@ -1,4 +1,5 @@
 <div class="ambient-bg" aria-hidden="true"></div>
+@if (!isStaffArea()) {
 <header>
   <a class="brand-logo" href="/" (click)="onTitleClick($event)">Nelia's BBQ</a>
   <nav aria-label="Primary navigation">
@@ -18,8 +19,11 @@
     </a>
   </nav>
 </header>
-<main><router-outlet /></main>
+}
+<main [class.staff-main]="isStaffArea()"><router-outlet /></main>
 @if (notifications.message(); as message) {
   <div class="toast show" role="status" aria-live="polite"><span aria-hidden="true">✦</span><span>{{ message }}</span></div>
 }
-<footer><p>&copy; 2026 Nelia's BBQ. All Rights Reserved. Artisanal Filipino Barbecue Fine Dining.</p></footer>
+@if (!isStaffArea()) {
+  <footer><p>&copy; 2026 Nelia's BBQ. All Rights Reserved. Artisanal Filipino Barbecue Fine Dining.</p></footer>
+}

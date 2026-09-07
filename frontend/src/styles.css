@@ -188,6 +188,12 @@
             padding: 2.5rem 2rem;
         }
 
+        main.staff-main {
+            max-width: none;
+            margin: 0;
+            padding: 0;
+        }
+
         /* Page View Switcher */
         .page-section {
             display: none;

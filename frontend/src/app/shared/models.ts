@@ -37,3 +37,35 @@ export interface FeedbackRequest {
 export interface CreatedResource {
   id: string;
 }
+
+export type InventoryStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+export type InventoryMovementType = 'RECEIVED' | 'USED' | 'CORRECTION';
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  unit: string;
+  quantity: number;
+  reorderLevel: number;
+  unitCost: number;
+  status: InventoryStatus;
+  updatedAt: string;
+}
+
+export interface CreateInventoryItemRequest {
+  name: string;
+  sku: string;
+  category: string;
+  unit: string;
+  quantity: number;
+  reorderLevel: number;
+  unitCost: number;
+}
+
+export interface AdjustInventoryRequest {
+  quantity: number;
+  movementType: InventoryMovementType;
+  note: string;
+}
