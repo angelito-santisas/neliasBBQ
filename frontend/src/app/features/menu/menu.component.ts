@@ -1,8 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartStore } from '../../core/cart.store';
-import { NotificationService } from '../../core/notification.service';
 
 @Component({
   imports: [CurrencyPipe, RouterLink],
@@ -12,6 +11,8 @@ import { NotificationService } from '../../core/notification.service';
       <div class="section-header"><h2>Our Barbecue Selection</h2><p>Authentic Filipino offal and skewers, slow-roasted over premium hardwood charcoal and glazed with heirloom marinades.</p></div>
       @if (cart.loading()) { <p class="load-message">Loading menu…</p> }
       @if (cart.menuError(); as error) { <p class="load-error">{{ error }}</p> }
+      @if (cart.storeOpen() === false) { <p class="availability-note" role="status">The store is closed. Browse the menu and order when we reopen.</p> }
+      <p class="availability-note">Product availability refreshes every 15 seconds.</p>
       @if (!cart.loading() && !cart.menuError()) {
         <div class="category-filters" role="group" aria-label="Filter menu by category">
           <button type="button" [attr.aria-pressed]="selectedCategory() === null" (click)="selectedCategory.set(null)">All</button>
@@ -34,10 +35,10 @@ import { NotificationService } from '../../core/notification.service';
                 <div class="menu-quantity" role="group" [attr.aria-label]="'Quantity of ' + item.name">
                   <button type="button" [attr.aria-label]="'Decrease ' + item.name" (click)="cart.changeQuantity(item.id, -1)">−</button>
                   <span aria-live="polite">{{ quantity }} in cart</span>
-                  <button type="button" [attr.aria-label]="'Increase ' + item.name" [disabled]="quantity >= cart.limitFor(item.id)" (click)="cart.add(item.id)">+</button>
+                  <button type="button" [attr.aria-label]="'Increase ' + item.name" [disabled]="!cart.canOrder() || quantity >= cart.limitFor(item.id)" (click)="cart.add(item.id)">+</button>
                 </div>
               } @else {
-                <button class="btn btn-primary add-to-cart-btn" type="button" [disabled]="!cart.limitFor(item.id)" (click)="add(item.id, item.name)">{{ cart.limitFor(item.id) ? 'Add To Order' : 'Unavailable' }}</button>
+                <button class="btn btn-primary add-to-cart-btn" type="button" [disabled]="!cart.canOrder() || !cart.limitFor(item.id)" (click)="cart.add(item.id)">{{ cart.storeOpen() === false ? 'Store closed' : cart.limitFor(item.id) ? 'Add To Order' : 'Unavailable' }}</button>
               }
             </div>
           </article>
@@ -61,11 +62,7 @@ export class MenuComponent {
   readonly categories = computed(() => [...new Set(this.cart.menu().map(item => item.category))]);
   readonly filteredMenu = computed(() => this.cart.menu().filter(item => this.selectedCategory() === null || item.category === this.selectedCategory()));
   readonly quantities = computed(() => Object.fromEntries(this.cart.lines().map(line => [line.item.id, line.quantity])));
-  private readonly notifications = inject(NotificationService);
   constructor() {
     this.cart.refreshMenu();
-    const timer = setInterval(() => { if (!document.hidden) this.cart.refreshMenu(); }, 15000);
-    inject(DestroyRef).onDestroy(() => clearInterval(timer));
   }
-  add(id: string, name: string): void { this.cart.add(id); this.notifications.show(`Added ${name} to your order.`); }
 }

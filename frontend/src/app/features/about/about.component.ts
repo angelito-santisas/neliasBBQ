@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
+  selector: 'app-about',
   template: `
     <section class="page-section active">
       <div class="section-header"><h2>Our Legacy & BBQ History</h2><p>From a small charcoal pit in 1968 to an elevated benchmark in traditional street food artistry.</p></div>

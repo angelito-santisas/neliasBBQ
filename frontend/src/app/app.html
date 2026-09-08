@@ -5,8 +5,7 @@
   <nav aria-label="Primary navigation">
     <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
     <a class="nav-link" routerLink="/menu" routerLinkActive="active">Menu</a>
-    <a class="nav-link" routerLink="/about" routerLinkActive="active">About</a>
-    <a class="nav-link" routerLink="/feedback" routerLinkActive="active">Feedback</a>
+    <span class="store-status" [class.store-closed]="cart.storeOpen() === false" role="status">{{ cart.storeOpen() === null ? 'Checking store…' : cart.storeOpen() ? 'Store open' : 'Store closed' }}</span>
     <a class="nav-link cart-link" routerLink="/cart" routerLinkActive="active" [attr.aria-label]="'Cart, ' + cart.count() + ' items'">
       <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <path d="M2 3h3l3 13h11l3-9H6" />
@@ -25,5 +24,7 @@
   <div class="toast show" role="status" aria-live="polite"><span aria-hidden="true">✦</span><span>{{ message }}</span></div>
 }
 @if (!isStaffArea()) {
-  <footer><p>&copy; 2026 Nelia's BBQ. All Rights Reserved. Artisanal Filipino Barbecue Fine Dining.</p></footer>
+  <footer><p>&copy; {{ year }} Nelia's BBQ. All rights reserved.</p>
+    <nav class="footer-links" aria-label="Footer navigation"><a routerLink="/policies" fragment="privacy">Privacy policy</a><a routerLink="/policies" fragment="ordering">Ordering policy</a><a routerLink="/" fragment="contacts">Contact</a></nav>
+  </footer>
 }

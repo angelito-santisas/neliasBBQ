@@ -5,6 +5,7 @@ import { ApiService } from '../../core/api.service';
 import { NotificationService } from '../../core/notification.service';
 
 @Component({
+  selector: 'app-feedback',
   imports: [ReactiveFormsModule],
   template: `
     <section class="page-section active">

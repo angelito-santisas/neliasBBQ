@@ -11,6 +11,7 @@ import { NotificationService } from './core/notification.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class App {
+  readonly year = new Date().getFullYear();
   private readonly router = inject(Router);
   readonly isStaffArea = signal(this.router.url.startsWith('/staff'));
   private titleClicks = 0;

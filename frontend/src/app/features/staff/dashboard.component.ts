@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { InventoryPhotoComponent } from './inventory-photo.component';
 import { StaffMenuComponent } from './staff-menu.component';
 import { StaffOrdersComponent } from './staff-orders.component';
+import { StoreControlComponent } from './store-control.component';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -16,7 +17,7 @@ type StaffView = 'overview' | 'inventory' | 'menu' | 'orders';
 type StockFilter = 'ALL' | InventoryStatus;
 
 @Component({
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule, InventoryPhotoComponent, StaffMenuComponent, StaffOrdersComponent],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule, InventoryPhotoComponent, StaffMenuComponent, StaffOrdersComponent, StoreControlComponent],
   template: `
     <section class="staff-shell" [attr.inert]="modal() ? '' : null">
       <aside class="staff-sidebar">
@@ -53,6 +54,7 @@ type StockFilter = 'ALL' | InventoryStatus;
           }
         </header>
 
+        <app-store-control />
         @if (view() === 'menu') {
           <app-staff-menu />
         } @else if (view() === 'orders') {
@@ -138,15 +140,6 @@ type StockFilter = 'ALL' | InventoryStatus;
         <section class="staff-modal" role="dialog" aria-modal="true" aria-labelledby="add-title" (click)="$event.stopPropagation()">
           <div class="modal-heading"><div><p class="eyebrow">New stock line</p><h2 id="add-title">Add inventory item</h2></div><button type="button" aria-label="Close" (click)="closeModal()">×</button></div>
           <form [formGroup]="addForm" (ngSubmit)="createItem()">
-            <div class="field full photo-field">
-              <label for="item-photo">Item photo <span>Optional</span></label>
-              <input #photoInput id="item-photo" type="file" accept="image/jpeg,image/png" (change)="selectPhoto($event)" [disabled]="saving()" aria-describedby="photo-help">
-              <small id="photo-help">JPG or PNG, up to 2 MB and 12 megapixels.</small>
-              @if (photoPreview()) {
-                <div class="photo-preview"><img [src]="photoPreview()" alt="Selected inventory photo"><button type="button" class="staff-secondary" (click)="clearPhoto(); photoInput.value = ''" [disabled]="saving()">Remove photo</button></div>
-              }
-              @if (photoError()) { <p class="form-error" role="alert">{{ photoError() }}</p> }
-            </div>
             <div class="field full"><label for="item-name">Item name</label><input id="item-name" type="text" formControlName="name" placeholder="e.g. Pork shoulder"></div>
             <div class="field"><label for="item-sku">SKU</label><input id="item-sku" type="text" formControlName="sku" placeholder="MEAT-PORK-01"></div>
             <div class="field"><label for="item-category">Category</label><input id="item-category" type="text" formControlName="category" placeholder="Meat"></div>
@@ -192,9 +185,6 @@ export class StaffDashboardComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private modalOpener: HTMLElement | null = null;
-  private photo: File | null = null;
-  readonly photoPreview = signal('');
-  readonly photoError = signal('');
 
   readonly items = signal<InventoryItem[]>([]);
   readonly loading = signal(true);
@@ -241,7 +231,6 @@ export class StaffDashboardComponent {
 
   constructor() {
     this.search.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => this.searchTerm.set(value));
-    this.destroyRef.onDestroy(() => this.clearPhoto());
     effect(onCleanup => {
       if (!this.modal()) return;
       const previousOverflow = document.body.style.overflow;
@@ -264,7 +253,7 @@ export class StaffDashboardComponent {
   statusLabel(status: InventoryStatus): string { return status === 'OUT_OF_STOCK' ? 'Out of stock' : status === 'LOW_STOCK' ? 'Low stock' : 'In stock'; }
 
   openAddItem(): void {
-    this.clearPhoto(); this.rememberFocus();
+    this.rememberFocus();
     this.addForm.reset({ name: '', sku: '', category: '', unit: 'kg', quantity: 0, reorderLevel: 0, unitCost: 0 });
     this.formError.set(''); this.modal.set('add');
     this.focusDialog();
@@ -279,25 +268,9 @@ export class StaffDashboardComponent {
 
   closeModal(): void {
     if (!this.saving()) {
-      this.modal.set(null); this.selectedItem.set(null); this.clearPhoto();
+      this.modal.set(null); this.selectedItem.set(null);
       setTimeout(() => this.modalOpener?.focus());
     }
-  }
-
-  selectPhoto(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    this.clearPhoto();
-    if (!file) return;
-    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size === 0 || file.size > 2 * 1024 * 1024) {
-      this.photoError.set('Choose a JPG or PNG photo up to 2 MB.'); input.value = ''; return;
-    }
-    this.photo = file; this.photoPreview.set(URL.createObjectURL(file));
-  }
-
-  clearPhoto(): void {
-    if (this.photoPreview()) URL.revokeObjectURL(this.photoPreview());
-    this.photo = null; this.photoPreview.set(''); this.photoError.set('');
   }
 
   private rememberFocus(): void { this.modalOpener = document.activeElement as HTMLElement; }
@@ -325,7 +298,7 @@ export class StaffDashboardComponent {
   createItem(): void {
     if (this.addForm.invalid || this.saving()) return;
     this.saving.set(true); this.formError.set('');
-    this.api.createInventoryItem(this.addForm.getRawValue(), this.photo).pipe(finalize(() => this.saving.set(false))).subscribe({
+    this.api.createInventoryItem(this.addForm.getRawValue()).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: item => { this.items.update(items => [...items, item].sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name))); this.saving.set(false); this.closeModal(); this.notifications.show(`${item.name} was added to inventory.`); },
       error: error => this.formError.set(this.apiError(error, 'The item could not be added.'))
     });

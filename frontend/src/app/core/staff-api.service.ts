@@ -16,6 +16,11 @@ export class StaffApiService {
   private readonly auth = inject(StaffAuthService);
   private readonly inventoryUrl = '/api/v1/staff/inventory';
 
+  setStoreOpen(open: boolean): Observable<{ open: boolean }> {
+    const headers = this.headers();
+    return headers ? this.http.put<{ open: boolean }>('/api/v1/staff/store', { open }, { headers }) : this.signedOut();
+  }
+
   getInventory(): Observable<InventoryItem[]> {
     const headers = this.headers();
     return headers ? this.http.get<InventoryItem[]>(this.inventoryUrl, { headers }) : this.signedOut();

@@ -25,6 +25,8 @@
             user-select: none;
         }
 
+        app-root { display: flex; flex-direction: column; min-height: 100vh; }
+
         body {
             background-color: var(--bg-dark);
             color: var(--text-primary);
@@ -914,3 +916,39 @@
             .feedback-form-container { padding: 1.5rem; }
             .rating-group { align-items: flex-start; flex-direction: column; gap: 0.75rem; }
         }
+
+/* Shared customer sections and availability controls. */
+.home-stack { display: block; padding-block: clamp(2rem, 6vw, 5rem); scroll-margin-top: 160px; }
+.home-stack + .home-stack { border-top: 1px solid var(--border-gold); }
+#home.home-stack { padding-top: 0; }
+.home-stack .hero { min-height: min(650px, 75vh); }
+.home-stack .hero > *, .history-container > *, .contact-grid > * { min-width: 0; }
+.contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.5rem; }
+.contact-grid article { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; border: 1px solid var(--border-gold); background: var(--bg-card); padding: clamp(1.25rem, 3vw, 2rem); border-radius: 8px; }
+.contact-grid h3 { font-size: 1.05rem; }
+.contact-grid address { font-style: normal; color: var(--text-muted); line-height: 1.7; }
+.contact-grid a, .policy-page a, .footer-links a { color: var(--accent-gold-light); overflow-wrap: anywhere; }
+.footer-links { justify-content: center; flex-wrap: wrap; gap: 1rem 2rem; margin-top: 1rem; }
+.store-status { border: 1px solid #65855b; color: #c5dfa7; border-radius: 30px; padding: .4rem .7rem; font-size: .75rem; white-space: nowrap; }
+.store-status.store-closed { border-color: #965b45; color: #efb6a3; }
+.availability-note { margin-block: .75rem; }
+.policy-page { max-width: 850px; margin: auto; }
+.policy-page .home-stack { scroll-margin-top: 160px; }
+.policy-page h2 { margin-bottom: 1rem; }
+.policy-page p + p { margin-top: 1rem; }
+.remove-item { padding: .4rem 0; color: var(--accent-gold-light); background: none; border: none; text-decoration: underline; cursor: pointer; }
+.cart-summary > p, .cart-summary > button { margin-top: 1rem; }
+@media (max-width: 600px) {
+  .home-stack .hero { min-height: auto; gap: 1.5rem; }
+  .history-card { padding: 1.25rem; }
+  .history-container { gap: 1.5rem; }
+  .section-header h2 { font-size: 1.65rem; overflow-wrap: anywhere; }
+  .hero-spotlight-beam { max-width: 45%; }
+  .brand-logo { font-size: 1.5rem; }
+  header nav { gap: .85rem; }
+  .store-status { font-size: .7rem; }
+  footer { padding: 2rem 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

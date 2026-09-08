@@ -16,6 +16,19 @@ Responsive behavior is a permanent project requirement. Every page, component, f
 
 Before a frontend change is considered complete, verify it at representative widths including 320 px, 375 px, 768 px, 1024 px, and a desktop width. Prefer fluid layouts, flexible media, and content-driven breakpoints instead of device-specific styling.
 
+## Local prerequisites
+
+- Java JDK 17 (including `javac`) and Apache Maven 3.9.x. Set `JAVA_HOME` to the JDK directory and add the JDK and Maven `bin` directories to your user `Path`.
+- Node.js 24 LTS and npm. Angular 21 supports Node.js 24; see [Angular version compatibility](https://angular.dev/reference/versions).
+- Spring Boot and its database libraries are installed by Maven from `backend/pom.xml`. Angular and its CLI are installed locally from `frontend/package-lock.json`; no global Angular installation is required.
+- The database is hosted by Supabase, so the documented setup does not require a local PostgreSQL or Docker installation.
+
+After installing tools or changing `Path`, restart VS Code and open new terminals. Check `java -version`, `javac -version`, `mvn -version`, `node --version`, and `npm.cmd --version`.
+
+Restore frontend dependencies with `cd frontend` followed by `npm.cmd ci`. On Windows PowerShell, use `npm.cmd` in place of `npm` if execution policy blocks `npm.ps1`; no execution-policy change is necessary. Angular CLI commands can be run locally using `npm.cmd exec -- ng version` (or `npm.cmd run ng -- generate component NAME`).
+
+If the root `.env` is missing, copy `.env.example` to `.env` and fill in the values below. Do not overwrite an existing configured `.env`.
+
 ## Configure Supabase
 
 Spring Boot loads the root `.env` automatically when started from `backend/` using the commands below. Fill in the JDBC URL, database username/password, Supabase publishable key, and staff user UUIDs there. The project URL is `https://ykiqpgbojpmxxcmozeud.supabase.co`. The `.env` file is ignored by Git; never commit secrets.

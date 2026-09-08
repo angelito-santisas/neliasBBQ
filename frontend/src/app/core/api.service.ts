@@ -12,6 +12,10 @@ export class ApiService {
     return this.http.get<MenuItem[]>(`${this.baseUrl}/menu`);
   }
 
+  getStoreStatus(): Observable<{ open: boolean }> {
+    return this.http.get<{ open: boolean }>(`${this.baseUrl}/store`);
+  }
+
   createOrder(request: OrderRequest): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(`${this.baseUrl}/orders`, request);
   }

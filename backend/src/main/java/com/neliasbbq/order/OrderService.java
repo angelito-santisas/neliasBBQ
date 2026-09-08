@@ -16,13 +16,16 @@ public class OrderService {
     private final MenuItemRepository menuRepository;
     private final OrderRepository orderRepository;
     private final ApplicationEventPublisher events;
+    private final com.neliasbbq.store.StoreService store;
 
-    public OrderService(MenuItemRepository menuRepository, OrderRepository orderRepository, ApplicationEventPublisher events) {
+    public OrderService(MenuItemRepository menuRepository, OrderRepository orderRepository, ApplicationEventPublisher events, com.neliasbbq.store.StoreService store) {
         this.menuRepository = menuRepository; this.orderRepository = orderRepository; this.events = events;
+        this.store = store;
     }
 
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
+        store.requireOpenForOrder();
         Map<String, Integer> quantities = new LinkedHashMap<>();
         request.items().forEach(item -> quantities.merge(item.menuItemId(), item.quantity(), Integer::sum));
         if (quantities.values().stream().anyMatch(quantity -> quantity > 99)) throw new BadRequestException("Combined quantity for an item cannot exceed 99.");

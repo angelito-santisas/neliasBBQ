@@ -24,11 +24,26 @@ class OrderServiceTest {
         when(menu.findByIdForUpdate("isaw")).thenReturn(java.util.Optional.of(menuItem));
         when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        OrderResponse response = new OrderService(menu, orders, events).create(new CreateOrderRequest(List.of(new CreateOrderRequest.Item("isaw", 2)), "Spicy"));
+        var store = mock(com.neliasbbq.store.StoreService.class);
+        OrderResponse response = new OrderService(menu, orders, events, store).create(new CreateOrderRequest(List.of(new CreateOrderRequest.Item("isaw", 2)), "Spicy"));
+        verify(store).requireOpenForOrder();
 
         assertEquals(new BigDecimal("360.00"), response.subtotal());
         assertEquals(new BigDecimal("410.00"), response.total());
         verify(events).publishEvent(any(OrderCreatedEvent.class));
         assertEquals(10, menuItem.getStockAvailable());
+    }
+
+    @Test void closedStoreRejectsCheckoutBeforeSavingAnything() {
+        var menu = mock(MenuItemRepository.class);
+        var orders = mock(OrderRepository.class);
+        var events = mock(ApplicationEventPublisher.class);
+        var store = mock(com.neliasbbq.store.StoreService.class);
+        org.mockito.Mockito.doThrow(new com.neliasbbq.common.BadRequestException("Store closed"))
+            .when(store).requireOpenForOrder();
+        org.junit.jupiter.api.Assertions.assertThrows(com.neliasbbq.common.BadRequestException.class,
+            () -> new OrderService(menu, orders, events, store).create(
+                new CreateOrderRequest(List.of(new CreateOrderRequest.Item("isaw", 1)), "")));
+        org.mockito.Mockito.verifyNoInteractions(menu, orders, events);
     }
 }
