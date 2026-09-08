@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" fill="#211e17"/>
+  <g fill="none" stroke="#d9aa52" stroke-width="6" stroke-linecap="round">
+    <path d="M210 260h220M230 245a90 90 0 0 1 180 0M320 145v-12"/>
+    <circle cx="320" cy="123" r="10"/>
+  </g>
+  <text x="320" y="320" fill="#d9aa52" font-family="serif" font-size="24" text-anchor="middle">Nelia’s BBQ</text>
+</svg>

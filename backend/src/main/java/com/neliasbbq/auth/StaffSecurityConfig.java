@@ -23,7 +23,7 @@ public class StaffSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(rules -> rules
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/orders", "/api/v1/feedback").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/menu", "/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/menu", "/api/v1/menu/photos/*", "/actuator/health").permitAll()
                 .requestMatchers("/api/v1/staff/**").hasRole("STAFF")
                 .anyRequest().denyAll())
             .exceptionHandling(errors -> errors.authenticationEntryPoint((req, res, error) -> res.sendError(401)))

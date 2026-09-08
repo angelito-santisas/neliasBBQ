@@ -21,9 +21,18 @@ public class StaffInventoryController {
     @GetMapping
     public List<InventoryItemResponse> getInventory() { return service.getInventory(); }
 
-    @PostMapping
+    @PostMapping(consumes = "application/json")
     public InventoryItemResponse create(@Valid @RequestBody CreateInventoryItemRequest request, Principal principal) {
         return service.create(request, principal.getName());
+    }
+
+    @PostMapping(consumes = "multipart/form-data")
+    public InventoryItemResponse createWithPhoto(
+            @Valid @org.springframework.web.bind.annotation.RequestPart("item") CreateInventoryItemRequest request,
+            @org.springframework.web.bind.annotation.RequestPart(value = "photo", required = false)
+                org.springframework.web.multipart.MultipartFile photo,
+            Principal principal) {
+        return service.create(request, principal.getName(), photo);
     }
 
     @PatchMapping("/{id}/stock")

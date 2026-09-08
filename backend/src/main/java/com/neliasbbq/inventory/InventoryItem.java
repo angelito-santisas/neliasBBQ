@@ -20,6 +20,7 @@ public class InventoryItem {
     @Column(name = "reorder_level") private BigDecimal reorderLevel;
     @Column(name = "unit_cost") private BigDecimal unitCost;
     private boolean active;
+    @Column(name = "photo_id") private UUID photoId;
     @Column(name = "updated_at") private OffsetDateTime updatedAt;
 
     protected InventoryItem() {}
@@ -46,6 +47,8 @@ public class InventoryItem {
     }
 
     public UUID getId() { return id; }
+    public UUID getPhotoId() { return photoId; }
+    public void setPhotoId(UUID photoId) { this.photoId = photoId; }
     public String getName() { return name; }
     public String getSku() { return sku; }
     public String getCategory() { return category; }

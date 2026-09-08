@@ -27,7 +27,9 @@ import { NotificationService } from '../../core/notification.service';
         <div class="cart-summary">
           <h3>Order Summary</h3><div class="summary-row"><span>Subtotal</span><span>{{ cart.subtotal() | currency:'PHP' }}</span></div><div class="summary-row"><span>Service & Packaging Fee</span><span>{{ serviceFee() | currency:'PHP' }}</span></div><div class="summary-row total"><span>Total</span><span>{{ cart.subtotal() + serviceFee() | currency:'PHP' }}</span></div>
           <div class="form-group"><label for="instructions">Special Instructions</label><textarea id="instructions" rows="3" maxlength="300" [(ngModel)]="instructions"></textarea></div>
-          <button class="btn btn-primary full-width" type="button" (click)="checkout()" [disabled]="!cart.lines().length || submitting()">{{ submitting() ? 'Submitting…' : 'Proceed To Checkout' }}</button>
+          @if (cart.exceedsStock()) { <p role="alert">Stock has changed. Reduce your quantities before checking out.</p> }
+          <p>Orders await staff confirmation. Stock is deducted when staff confirms.</p>
+          <button class="btn btn-primary full-width" type="button" (click)="checkout()" [disabled]="!cart.lines().length || submitting() || cart.exceedsStock()">{{ submitting() ? 'Submitting…' : 'Proceed To Checkout' }}</button>
         </div>
       </div>
     </section>`,
@@ -39,13 +41,14 @@ export class CartComponent {
   private readonly notifications = inject(NotificationService);
   readonly submitting = signal(false);
   instructions = '';
+  constructor() { this.cart.refreshMenu(); }
   serviceFee(): number { return this.cart.lines().length ? 50 : 0; }
   checkout(): void {
-    if (!this.cart.lines().length) return;
+    if (!this.cart.lines().length || this.submitting() || this.cart.exceedsStock()) return;
     this.submitting.set(true);
     this.api.createOrder(this.cart.toOrderRequest(this.instructions.trim())).pipe(finalize(() => this.submitting.set(false))).subscribe({
-      next: order => { this.cart.clear(); this.instructions = ''; this.notifications.show(`Order ${order.id.slice(0, 8)} submitted successfully.`); },
-      error: () => this.notifications.show('Order could not be submitted. Please try again.')
+      next: order => { this.cart.clear(); this.instructions = ''; this.notifications.show(`Order ${order.id.slice(0, 8)} submitted. Awaiting staff confirmation.`); },
+      error: err => { this.cart.refreshMenu(); this.notifications.show(err?.error?.detail || 'Order could not be submitted. Please try again.'); }
     });
   }
 }

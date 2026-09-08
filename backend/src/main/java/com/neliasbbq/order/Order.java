@@ -21,6 +21,8 @@ public class Order {
     private BigDecimal total;
     @Column(name = "special_instructions") private String specialInstructions;
     private String status;
+    @Column(name = "confirmed_by") private String confirmedBy;
+    @Column(name = "confirmed_at") private OffsetDateTime confirmedAt;
     @Column(name = "created_at") private OffsetDateTime createdAt;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -37,6 +39,7 @@ public class Order {
     public BigDecimal getServiceFee() { return serviceFee; }
     public BigDecimal getTotal() { return total; }
     public String getStatus() { return status; }
+    public void confirm(String staffId) { status = "confirmed"; confirmedBy = staffId; confirmedAt = OffsetDateTime.now(); }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public List<OrderItem> getItems() { return List.copyOf(items); }
 }

@@ -6,8 +6,6 @@ import com.neliasbbq.menu.MenuItemRepository;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +27,14 @@ public class OrderService {
         request.items().forEach(item -> quantities.merge(item.menuItemId(), item.quantity(), Integer::sum));
         if (quantities.values().stream().anyMatch(quantity -> quantity > 99)) throw new BadRequestException("Combined quantity for an item cannot exceed 99.");
 
-        Map<String, MenuItem> menu = menuRepository.findAllById(quantities.keySet()).stream()
-            .filter(MenuItem::isActive).collect(Collectors.toMap(MenuItem::getId, Function.identity()));
-        if (menu.size() != quantities.size()) throw new BadRequestException("One or more menu items are unavailable.");
+        // Check current availability without reserving portions: staff confirmation deducts stock.
+        Map<String, MenuItem> menu = new LinkedHashMap<>();
+        quantities.keySet().stream().sorted().forEach(id -> {
+            MenuItem item = menuRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new BadRequestException("One or more menu items are unavailable."));
+            item.checkStock(quantities.get(id));
+            menu.put(id, item);
+        });
 
         BigDecimal subtotal = quantities.entrySet().stream()
             .map(entry -> menu.get(entry.getKey()).getPrice().multiply(BigDecimal.valueOf(entry.getValue())))

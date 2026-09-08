@@ -10,6 +10,7 @@ export class CartStore {
   private readonly api = inject(ApiService);
   private readonly menuItems = signal<MenuItem[]>([]);
   private readonly quantities = signal<Record<string, number>>(this.loadQuantities());
+  private menuRequest = 0;
   readonly menu = this.menuItems.asReadonly();
   readonly menuError = signal<string | null>(null);
   readonly loading = signal(true);
@@ -23,16 +24,25 @@ export class CartStore {
   readonly subtotal = computed(() => this.lines().reduce((sum, line) => sum + line.item.price * line.quantity, 0));
 
   constructor() {
+    this.refreshMenu();
+  }
+
+  refreshMenu(): void {
+    const request = ++this.menuRequest;
     this.api.getMenu().pipe(
-      tap(items => { this.menuItems.set(items); this.loading.set(false); }),
-      catchError(() => { this.menuError.set('The menu is temporarily unavailable.'); this.loading.set(false); return of([]); })
+      tap(items => { if (request === this.menuRequest) { this.menuItems.set(items); this.menuError.set(null); this.loading.set(false); } }),
+      catchError(() => { if (request === this.menuRequest) { this.menuError.set('The menu is temporarily unavailable.'); this.loading.set(false); } return of([]); })
     ).subscribe();
   }
 
   add(itemId: string): void {
-    if (!this.menuItems().some(item => item.id === itemId)) return;
-    this.update(values => ({ ...values, [itemId]: Math.min((values[itemId] ?? 0) + 1, 99) }));
+    const limit = this.limitFor(itemId);
+    if (limit === 0) return;
+    this.update(values => ({ ...values, [itemId]: Math.min((values[itemId] ?? 0) + 1, limit) }));
   }
+
+  limitFor(itemId: string): number { return Math.min(this.menuItems().find(item => item.id === itemId)?.stockAvailable ?? 0, 99); }
+  readonly exceedsStock = computed(() => this.lines().some(line => line.quantity > this.limitFor(line.item.id)));
 
   changeQuantity(itemId: string, delta: number): void {
     this.update(values => {
@@ -42,6 +52,7 @@ export class CartStore {
         void removed;
         return rest;
       }
+      if (delta > 0 && next > this.limitFor(itemId)) return values;
       return { ...values, [itemId]: Math.min(next, 99) };
     });
   }

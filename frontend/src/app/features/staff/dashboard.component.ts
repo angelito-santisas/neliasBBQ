@@ -1,5 +1,9 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { InventoryPhotoComponent } from './inventory-photo.component';
+import { StaffMenuComponent } from './staff-menu.component';
+import { StaffOrdersComponent } from './staff-orders.component';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -8,13 +12,13 @@ import { StaffAuthService } from '../../core/staff-auth.service';
 import { NotificationService } from '../../core/notification.service';
 import { InventoryItem, InventoryMovementType, InventoryStatus } from '../../shared/models';
 
-type StaffView = 'overview' | 'inventory';
+type StaffView = 'overview' | 'inventory' | 'menu' | 'orders';
 type StockFilter = 'ALL' | InventoryStatus;
 
 @Component({
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule, InventoryPhotoComponent, StaffMenuComponent, StaffOrdersComponent],
   template: `
-    <section class="staff-shell">
+    <section class="staff-shell" [attr.inert]="modal() ? '' : null">
       <aside class="staff-sidebar">
         <div class="staff-brand"><span class="brand-mark" aria-hidden="true">N</span><span><strong>Nelia's BBQ</strong><small>Staff portal</small></span></div>
         <nav class="staff-nav" aria-label="Staff navigation">
@@ -26,7 +30,8 @@ type StockFilter = 'ALL' | InventoryStatus;
             <span aria-hidden="true">▦</span> Inventory
             @if (attentionCount() > 0) { <b>{{ attentionCount() }}</b> }
           </button>
-          <button type="button" disabled title="Order management is coming soon"><span aria-hidden="true">▤</span> Orders <em>Soon</em></button>
+          <button type="button" [class.active]="view() === 'menu'" (click)="view.set('menu')"><span aria-hidden="true">☷</span> Menu</button>
+          <button type="button" [class.active]="view() === 'orders'" (click)="view.set('orders')"><span aria-hidden="true">▤</span> Orders</button>
           <button type="button" class="mobile-logout" (click)="logout()"><span aria-hidden="true">↪</span> Sign out</button>
         </nav>
         <div class="staff-sidebar-footer">
@@ -40,15 +45,19 @@ type StockFilter = 'ALL' | InventoryStatus;
         <header class="staff-header">
           <div>
             <p class="eyebrow">Operations</p>
-            <h1>{{ view() === 'overview' ? 'Good day, team' : 'Inventory' }}</h1>
-            <p>{{ view() === 'overview' ? 'Here is what needs your attention today.' : 'Track ingredients, supplies, and stock levels.' }}</p>
+            <h1>{{ view() === 'overview' ? 'Good day, team' : view() === 'menu' ? 'Menu' : view() === 'orders' ? 'Orders' : 'Inventory' }}</h1>
+            <p>{{ view() === 'overview' ? 'Here is what needs your attention today.' : view() === 'menu' ? 'Manage dishes, pictures, prices, and available stock.' : view() === 'orders' ? 'Review and confirm customer orders.' : 'Track ingredients, supplies, and stock levels.' }}</p>
           </div>
           @if (view() === 'inventory') {
             <button type="button" class="staff-primary" (click)="openAddItem()"><span aria-hidden="true">＋</span> Add item</button>
           }
         </header>
 
-        @if (loading()) {
+        @if (view() === 'menu') {
+          <app-staff-menu />
+        } @else if (view() === 'orders') {
+          <app-staff-orders />
+        } @else if (loading()) {
           <div class="staff-state" role="status"><span class="spinner" aria-hidden="true"></span> Loading inventory…</div>
         } @else if (loadError()) {
           <div class="staff-state error" role="alert"><strong>Inventory could not be loaded.</strong><span>{{ loadError() }}</span><button type="button" (click)="loadInventory()">Try again</button></div>
@@ -67,7 +76,7 @@ type StockFilter = 'ALL' | InventoryStatus;
                 <div class="attention-list">
                   @for (item of attentionItems(); track item.id) {
                     <button type="button" (click)="openAdjustment(item)">
-                      <span class="item-initial">{{ item.name.charAt(0) }}</span>
+                      <app-inventory-photo [url]="item.imageUrl" [name]="item.name" />
                       <span><strong>{{ item.name }}</strong><small>{{ item.sku }} · Reorder at {{ item.reorderLevel | number:'1.0-2' }} {{ item.unit }}</small></span>
                       <span class="on-hand"><strong>{{ item.quantity | number:'1.0-2' }}</strong><small>{{ item.unit }} left</small></span>
                       <span class="status-pill" [class.out]="item.status === 'OUT_OF_STOCK'">{{ statusLabel(item.status) }}</span>
@@ -104,7 +113,7 @@ type StockFilter = 'ALL' | InventoryStatus;
                   <tbody>
                     @for (item of filteredItems(); track item.id) {
                       <tr>
-                        <td data-label="Item"><span class="item-cell"><span class="item-initial">{{ item.name.charAt(0) }}</span><span><strong>{{ item.name }}</strong><small>{{ item.sku }}</small></span></span></td>
+                        <td data-label="Item"><span class="item-cell"><app-inventory-photo [url]="item.imageUrl" [name]="item.name" /><span><strong>{{ item.name }}</strong><small>{{ item.sku }}</small></span></span></td>
                         <td data-label="Category">{{ item.category }}</td>
                         <td data-label="On hand"><strong>{{ item.quantity | number:'1.0-2' }}</strong> {{ item.unit }}</td>
                         <td data-label="Reorder at">{{ item.reorderLevel | number:'1.0-2' }} {{ item.unit }}</td>
@@ -129,6 +138,15 @@ type StockFilter = 'ALL' | InventoryStatus;
         <section class="staff-modal" role="dialog" aria-modal="true" aria-labelledby="add-title" (click)="$event.stopPropagation()">
           <div class="modal-heading"><div><p class="eyebrow">New stock line</p><h2 id="add-title">Add inventory item</h2></div><button type="button" aria-label="Close" (click)="closeModal()">×</button></div>
           <form [formGroup]="addForm" (ngSubmit)="createItem()">
+            <div class="field full photo-field">
+              <label for="item-photo">Item photo <span>Optional</span></label>
+              <input #photoInput id="item-photo" type="file" accept="image/jpeg,image/png" (change)="selectPhoto($event)" [disabled]="saving()" aria-describedby="photo-help">
+              <small id="photo-help">JPG or PNG, up to 2 MB and 12 megapixels.</small>
+              @if (photoPreview()) {
+                <div class="photo-preview"><img [src]="photoPreview()" alt="Selected inventory photo"><button type="button" class="staff-secondary" (click)="clearPhoto(); photoInput.value = ''" [disabled]="saving()">Remove photo</button></div>
+              }
+              @if (photoError()) { <p class="form-error" role="alert">{{ photoError() }}</p> }
+            </div>
             <div class="field full"><label for="item-name">Item name</label><input id="item-name" type="text" formControlName="name" placeholder="e.g. Pork shoulder"></div>
             <div class="field"><label for="item-sku">SKU</label><input id="item-sku" type="text" formControlName="sku" placeholder="MEAT-PORK-01"></div>
             <div class="field"><label for="item-category">Category</label><input id="item-category" type="text" formControlName="category" placeholder="Meat"></div>
@@ -163,7 +181,7 @@ type StockFilter = 'ALL' | InventoryStatus;
       </div>
     }
   `,
-  styleUrl: './dashboard.component.css',
+  styleUrls: ['./dashboard.component.css', './staff-overview.css', './staff-inventory.css', './staff-modal.css', './staff-responsive.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StaffDashboardComponent {
@@ -171,6 +189,12 @@ export class StaffDashboardComponent {
   private readonly api = inject(StaffApiService);
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
+  private modalOpener: HTMLElement | null = null;
+  private photo: File | null = null;
+  readonly photoPreview = signal('');
+  readonly photoError = signal('');
 
   readonly items = signal<InventoryItem[]>([]);
   readonly loading = signal(true);
@@ -216,7 +240,14 @@ export class StaffDashboardComponent {
   });
 
   constructor() {
-    this.search.valueChanges.subscribe(value => this.searchTerm.set(value));
+    this.search.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => this.searchTerm.set(value));
+    this.destroyRef.onDestroy(() => this.clearPhoto());
+    effect(onCleanup => {
+      if (!this.modal()) return;
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => document.body.style.overflow = previousOverflow);
+    });
     this.loadInventory();
   }
 
@@ -233,16 +264,58 @@ export class StaffDashboardComponent {
   statusLabel(status: InventoryStatus): string { return status === 'OUT_OF_STOCK' ? 'Out of stock' : status === 'LOW_STOCK' ? 'Low stock' : 'In stock'; }
 
   openAddItem(): void {
+    this.clearPhoto(); this.rememberFocus();
     this.addForm.reset({ name: '', sku: '', category: '', unit: 'kg', quantity: 0, reorderLevel: 0, unitCost: 0 });
     this.formError.set(''); this.modal.set('add');
+    this.focusDialog();
   }
 
   openAdjustment(item: InventoryItem): void {
+    this.rememberFocus();
     this.selectedItem.set(item); this.adjustForm.reset({ quantity: 0, note: '' });
     this.movementType.set('RECEIVED'); this.formError.set(''); this.modal.set('adjust');
+    this.focusDialog();
   }
 
-  closeModal(): void { if (!this.saving()) { this.modal.set(null); this.selectedItem.set(null); } }
+  closeModal(): void {
+    if (!this.saving()) {
+      this.modal.set(null); this.selectedItem.set(null); this.clearPhoto();
+      setTimeout(() => this.modalOpener?.focus());
+    }
+  }
+
+  selectPhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.clearPhoto();
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size === 0 || file.size > 2 * 1024 * 1024) {
+      this.photoError.set('Choose a JPG or PNG photo up to 2 MB.'); input.value = ''; return;
+    }
+    this.photo = file; this.photoPreview.set(URL.createObjectURL(file));
+  }
+
+  clearPhoto(): void {
+    if (this.photoPreview()) URL.revokeObjectURL(this.photoPreview());
+    this.photo = null; this.photoPreview.set(''); this.photoError.set('');
+  }
+
+  private rememberFocus(): void { this.modalOpener = document.activeElement as HTMLElement; }
+  private focusDialog(): void {
+    setTimeout(() => this.element.nativeElement.querySelector<HTMLElement>('.staff-modal input, .staff-modal button')?.focus());
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDialogKey(event: KeyboardEvent): void {
+    if (!this.modal()) return;
+    if (event.key === 'Escape') { event.preventDefault(); this.closeModal(); return; }
+    if (event.key !== 'Tab') return;
+    const controls = Array.from(this.element.nativeElement.querySelectorAll<HTMLElement>(
+      '.staff-modal button:not(:disabled), .staff-modal input:not(:disabled), .staff-modal select:not(:disabled), .staff-modal textarea:not(:disabled)'));
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  }
   setMovementType(type: InventoryMovementType): void { this.movementType.set(type); }
   adjustedQuantity(item: InventoryItem): number {
     const amount = Number(this.adjustForm.controls.quantity.value) || 0;
@@ -252,7 +325,7 @@ export class StaffDashboardComponent {
   createItem(): void {
     if (this.addForm.invalid || this.saving()) return;
     this.saving.set(true); this.formError.set('');
-    this.api.createInventoryItem(this.addForm.getRawValue()).pipe(finalize(() => this.saving.set(false))).subscribe({
+    this.api.createInventoryItem(this.addForm.getRawValue(), this.photo).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: item => { this.items.update(items => [...items, item].sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name))); this.saving.set(false); this.closeModal(); this.notifications.show(`${item.name} was added to inventory.`); },
       error: error => this.formError.set(this.apiError(error, 'The item could not be added.'))
     });

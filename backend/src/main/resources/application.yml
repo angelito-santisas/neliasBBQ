@@ -3,6 +3,10 @@ spring:
     import: optional:file:../.env[.properties]
   application:
     name: nelias-bbq
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
   datasource:
     url: ${SUPABASE_DB_URL}
     username: ${SUPABASE_DB_USERNAME:postgres}

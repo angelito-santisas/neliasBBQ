@@ -17,7 +17,7 @@ import { StaffAuthService } from '../../core/staff-auth.service';
         <button class="btn btn-primary full-width" [disabled]="busy() || form.invalid">{{ busy() ? 'Signing in…' : 'Sign in' }}</button>
       </form>
     </section>`,
-  styles: `:host { min-height: 100vh; display: grid; place-items: center; padding: 1.5rem; } .feedback-form-container { width: min(100%, 520px); } input { width: 100%; min-width: 0; padding: 1rem; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border-gold); border-radius: 4px; font: inherit; } input:focus-visible { outline: 2px solid var(--accent-gold); } h1 { overflow-wrap: anywhere; }`
+  styles: `:host { min-height: 100dvh; display: grid; place-items: center; padding: clamp(.75rem, 4vw, 1.5rem); } .feedback-form-container { width: min(100%, 520px); min-width: 0; padding: clamp(1rem, 5vw, 2.5rem); overflow-wrap: anywhere; } input { width: 100%; min-width: 0; padding: 1rem; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border-gold); border-radius: 4px; font: inherit; font-size: 1rem; } input:focus-visible { outline: 2px solid var(--accent-gold); } h1 { overflow-wrap: anywhere; font-size: clamp(1.5rem, 6vw, 2.5rem); } @media (max-height: 500px) { :host { align-items: start; } }`
 })
 export class StaffLoginComponent {
   private readonly auth = inject(StaffAuthService);

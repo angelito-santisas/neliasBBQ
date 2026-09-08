@@ -1,4 +1,5 @@
 export interface MenuItem {
+  stockAvailable: number | null;
   id: string;
   name: string;
   category: string;
@@ -42,6 +43,7 @@ export type InventoryStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
 export type InventoryMovementType = 'RECEIVED' | 'USED' | 'CORRECTION';
 
 export interface InventoryItem {
+  imageUrl: string | null;
   id: string;
   name: string;
   sku: string;

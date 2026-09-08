@@ -73,6 +73,31 @@ npm start
 
 Open <http://localhost:4200>. Angular proxies `/api` to Spring Boot at port 8080.
 
+## Staff menu and inventory photos
+
+Use **Staff → Menu → Add product** to create a product with its title, category, description, price, stock count, visibility, and optional picture. Category choices include Classics, Offal Delights, Specialty Dipping Sauces, Sides, Drinks, Desserts, and any existing menu categories. The category dropdown is also available when editing an item. New products receive a generated ID; products without a picture use a placeholder until one is uploaded. Published products appear in the customer menu under their selected category.
+
+The staff **Menu** tab reads the existing Supabase `menu_items` table through the authenticated API. Use **Edit item** to update its title, description, price, picture, stock count, and visibility. The original picture stays unless replaced with a JPG or PNG (2 MB / 12 megapixels maximum). Menu pictures are public so customers can see them; inventory pictures remain staff-only. The editor detects intervening updates, including stock deductions, and asks you to refresh instead of overwriting newer data.
+
+Customers see portions available, with a stock refresh every 15 seconds while the menu page is visible. Existing dishes have unknown stock until staff enters a count; unknown or zero stock cannot be ordered. Menu portions are separate from ingredient inventory quantities.
+
+Checkout creates a **submitted** order without deducting stock. In **Staff → Orders**, use **Confirm order** to deduct its portions and mark it **confirmed**. The database checks and locks all affected dishes within the confirmation transaction. Insufficient stock rolls the confirmation back; repeating confirmation of an already confirmed order does not deduct twice. Confirmation records the staff UUID and time. The Orders screen lists the oldest 100 pending orders; refresh after confirming to load more. Pending orders do not reserve portions, so a later confirmation can fail if another order consumed the remaining stock.
+
+`V6__menu_editing.sql` adds menu photos, stock counts, edit versions, and confirmation audit fields. It is applied to the configured project. If a staff page was open during the update, close its editor and click **Refresh menu** before editing again.
+
+In **Inventory → Add item**, choose an optional JPG or PNG photo, check its preview, then save. Files are limited to 2 MB and 12 megapixels. The backend validates and re-encodes the image to discard metadata, then saves the photo, item, and opening stock movement together. Photos are stored in the database's `inventory_photos` table, with RLS and revoked browser-role privileges; viewing a photo requires staff authentication. This bounded database storage works without additional storage credentials. A larger image catalogue should move to object storage.
+
+Flyway applies `V4__staff_inventory.sql` and `V5__inventory_photos.sql` on backend startup. Both are applied to the configured project. Staff layouts use container-based breakpoints, mobile navigation, wrapping inventory cards, and scrollable dialogs. They were checked at 320, 375, 768, 1024, 1440, and 1920 px, plus a 640 × 320 landscape frame.
+
+The optional database integration test uses the configured database, runs normal startup migrations, and rolls its test item, movement, and photo back. Enable it only when intending to test that database:
+
+```powershell
+cd backend
+$env:SUPABASE_INTEGRATION_TESTS='true'
+mvn test
+Remove-Item Env:SUPABASE_INTEGRATION_TESTS
+```
+
 ## Verify
 
 ```powershell

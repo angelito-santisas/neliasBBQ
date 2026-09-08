@@ -22,6 +22,7 @@ class StaffSecurityTest {
     static class Config {
         @Bean StaffAuthService auth() { return mock(StaffAuthService.class); }
         @Bean StaffAuthController controller(StaffAuthService auth) { return new StaffAuthController(auth); }
+        @Bean com.neliasbbq.config.WebConfig cors() { return new com.neliasbbq.config.WebConfig("http://localhost:4200"); }
     }
     @Autowired WebApplicationContext context;
     @Autowired StaffAuthService auth;
@@ -32,6 +33,30 @@ class StaffSecurityTest {
     }
     @Test void anonymousIsRejected() throws Exception {
         mvc.perform(get("/api/v1/staff/me").servletPath("/api/v1/staff/me")).andExpect(status().isUnauthorized());
+    }
+    @Test void photosAndStaffMenuRequireAuthentication() throws Exception {
+        for (String path : new String[]{"/api/v1/staff/photos/00000000-0000-0000-0000-000000000001", "/api/v1/staff/menu"}) {
+            mvc.perform(get(path).servletPath(path)).andExpect(status().isUnauthorized());
+        }
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/v1/staff/inventory")
+            .servletPath("/api/v1/staff/inventory")).andExpect(status().isUnauthorized());
+    }
+    @Test void updatePreflightAllowsStaffAuthorizationHeader() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/v1/staff/menu/isaw")
+            .servletPath("/api/v1/staff/menu/isaw").header("Origin", "http://localhost:4200")
+            .header("Access-Control-Request-Method", "PUT").header("Access-Control-Request-Headers", "authorization,content-type"))
+            .andExpect(status().isOk());
+    }
+    @Test void menuEditingAndConfirmationRejectAnonymousRequests() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/staff/menu")
+            .servletPath("/api/v1/staff/menu").contentType("application/json").content("{}"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/staff/menu/isaw")
+            .servletPath("/api/v1/staff/menu/isaw").contentType("application/json").content("{}"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/staff/orders/00000000-0000-0000-0000-000000000001/confirm")
+            .servletPath("/api/v1/staff/orders/00000000-0000-0000-0000-000000000001/confirm"))
+            .andExpect(status().isUnauthorized());
     }
     @Test void invalidOrNonStaffTokenIsRejected() throws Exception {
         when(auth.verify("invalid")).thenThrow(new IllegalArgumentException());

@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartStore } from '../../core/cart.store';
 import { NotificationService } from '../../core/notification.service';
@@ -29,14 +29,15 @@ import { NotificationService } from '../../core/notification.service';
               <span class="menu-card-badge">{{ item.category }}</span>
               <div class="menu-card-title"><h3>{{ item.name }}</h3><span class="menu-card-price">{{ item.price | currency:'PHP':'symbol':'1.2-2' }}</span></div>
               <p class="menu-card-desc">{{ item.description }}</p>
+              <p class="stock-available" aria-live="polite">{{ item.stockAvailable == null ? 'Temporarily unavailable' : item.stockAvailable === 0 ? 'Sold out' : item.stockAvailable + ' portions available' }}</p>
               @if (quantities()[item.id]; as quantity) {
                 <div class="menu-quantity" role="group" [attr.aria-label]="'Quantity of ' + item.name">
                   <button type="button" [attr.aria-label]="'Decrease ' + item.name" (click)="cart.changeQuantity(item.id, -1)">−</button>
                   <span aria-live="polite">{{ quantity }} in cart</span>
-                  <button type="button" [attr.aria-label]="'Increase ' + item.name" [disabled]="quantity >= 99" (click)="cart.add(item.id)">+</button>
+                  <button type="button" [attr.aria-label]="'Increase ' + item.name" [disabled]="quantity >= cart.limitFor(item.id)" (click)="cart.add(item.id)">+</button>
                 </div>
               } @else {
-                <button class="btn btn-primary add-to-cart-btn" type="button" (click)="add(item.id, item.name)">Add To Order</button>
+                <button class="btn btn-primary add-to-cart-btn" type="button" [disabled]="!cart.limitFor(item.id)" (click)="add(item.id, item.name)">{{ cart.limitFor(item.id) ? 'Add To Order' : 'Unavailable' }}</button>
               }
             </div>
           </article>
@@ -61,5 +62,10 @@ export class MenuComponent {
   readonly filteredMenu = computed(() => this.cart.menu().filter(item => this.selectedCategory() === null || item.category === this.selectedCategory()));
   readonly quantities = computed(() => Object.fromEntries(this.cart.lines().map(line => [line.item.id, line.quantity])));
   private readonly notifications = inject(NotificationService);
+  constructor() {
+    this.cart.refreshMenu();
+    const timer = setInterval(() => { if (!document.hidden) this.cart.refreshMenu(); }, 15000);
+    inject(DestroyRef).onDestroy(() => clearInterval(timer));
+  }
   add(id: string, name: string): void { this.cart.add(id); this.notifications.show(`Added ${name} to your order.`); }
 }

@@ -1,0 +1,68 @@
+/* Container-aware layouts also work inside narrow embedded frames. */
+:host { overflow-wrap:anywhere; min-height:100dvh; }
+:host * { min-width:0; }
+.staff-shell { min-height:100dvh; }
+.staff-sidebar { height:100dvh; overflow-y:auto; }
+.staff-workspace { container-type:inline-size; }
+.staff-header { flex-direction:row; }
+.staff-header > div { flex:1; }
+.metric-grid article > div { min-width:0; }
+.metric-grid strong { overflow-wrap:anywhere; line-height:1.3; }
+.card-heading,.table-summary { flex-wrap:wrap; gap:12px; }
+.attention-list > button { grid-template-columns:40px minmax(0,1fr) auto auto; }
+.item-cell { align-items:center; }
+.item-cell > span { overflow-wrap:anywhere; }
+table { min-width:0; table-layout:fixed; }
+td { white-space:normal; overflow-wrap:anywhere; }
+th:first-child { width:24%; }
+.table-scroll { overflow:visible; }
+.staff-primary,.staff-secondary,.row-actions button,.filter-row button,.movement-toggle button { min-height:44px; }
+.staff-primary,.staff-secondary { padding-block:10px; }
+.staff-modal { max-height:calc(100dvh - 32px); overscroll-behavior:contain; }
+.modal-backdrop { overflow:auto; overscroll-behavior:contain; padding:16px; }
+.modal-heading > button { flex:0 0 44px; min-height:44px; }
+.staff-modal form { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.field input,.field select,.field textarea { min-height:44px; font-size:1rem; }
+.current-stock { grid-template-columns:minmax(0,1fr) auto; }
+.stock-preview,.modal-actions { flex-wrap:wrap; gap:10px; }
+.photo-field small { display:block; margin:8px 0; color:#b6b8ab; font-size:.75rem; }
+.photo-preview { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.photo-preview img { width:100px; height:100px; max-width:100%; object-fit:cover; border-radius:8px; }
+@container (max-width:1050px) { .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.overview-grid { grid-template-columns:1fr; } }
+@container (max-width:900px) {
+ .inventory-toolbar { flex-direction:column; align-items:stretch; }
+ .search-field { width:100%; }
+ .filter-row { justify-content:flex-start; }
+ table,tbody { display:block; } thead { display:none; }
+ tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; padding:18px; border-top:1px solid var(--staff-line); }
+ td { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:6px; padding:0; border:0; text-align:left; }
+ td::before { content:attr(data-label); width:100%; color:#b5b6aa; font-size:.7rem; }
+ td:first-child,.row-actions { grid-column:1/-1; } td:first-child::before,.row-actions::before { display:none; }
+ .row-actions button { width:100%; }
+}
+@container (max-width:440px) {
+ .metric-grid { grid-template-columns:1fr; }
+ .staff-header { flex-direction:column; align-items:stretch; }
+ .staff-header > .staff-primary { width:100%; }
+ .attention-list > button { grid-template-columns:40px minmax(0,1fr); }
+ .on-hand { grid-column:2; text-align:left; }
+ .attention-list .status-pill { display:inline-flex; grid-column:2; justify-self:start; }
+ .filter-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+ .filter-row button { white-space:normal; }
+}
+@media (max-width:900px) {
+ .staff-shell { display:block; padding-bottom:calc(78px + env(safe-area-inset-bottom)); }
+ .staff-sidebar { position:fixed; z-index:50; inset:auto 0 0; height:auto; width:auto; padding:6px 8px calc(6px + env(safe-area-inset-bottom)); border:0; border-top:1px solid var(--staff-line); }
+ .staff-brand,.staff-sidebar-footer,.staff-nav p,.staff-nav button:disabled { display:none; }
+ .staff-nav { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); padding:0; gap:4px; }
+ .staff-nav button,.staff-nav .mobile-logout { display:flex; flex-direction:column; justify-content:center; gap:3px; padding:8px 2px; font-size:clamp(.6rem,2vw,.7rem); }
+ .staff-nav button { position:relative; min-height:56px; }
+ .staff-nav button b { position:absolute; top:0; right:3px; margin:0; font-size:.55rem; }
+}
+@media (max-width:520px) {
+ .staff-modal { padding:16px; }.staff-modal form { grid-template-columns:minmax(0,1fr); }
+ .modal-actions > button { flex:1 1 100px; }.current-stock { display:flex; flex-wrap:wrap; gap:10px; }.current-stock small { width:100%; }
+}
+@media (max-height:500px) {
+ .modal-backdrop { align-items:start; padding:8px; }.staff-modal { max-height:calc(100dvh - 16px); }
+}

@@ -17,10 +17,11 @@ class OrderServiceTest {
     @Test
     void calculatesPricesOnTheServer() throws Exception {
         MenuItem menuItem = new MenuItem("isaw", "Isaw ng Manok", "Offal", "Description", "image", new BigDecimal("180.00"), true);
+        menuItem.update(new com.neliasbbq.menu.UpdateMenuItemRequest("Isaw ng Manok", "Description", new BigDecimal("180.00"), true, 10, 0L));
         MenuItemRepository menu = mock(MenuItemRepository.class);
         OrderRepository orders = mock(OrderRepository.class);
         ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
-        when(menu.findAllById(any())).thenReturn(List.of(menuItem));
+        when(menu.findByIdForUpdate("isaw")).thenReturn(java.util.Optional.of(menuItem));
         when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         OrderResponse response = new OrderService(menu, orders, events).create(new CreateOrderRequest(List.of(new CreateOrderRequest.Item("isaw", 2)), "Spicy"));
@@ -28,5 +29,6 @@ class OrderServiceTest {
         assertEquals(new BigDecimal("360.00"), response.subtotal());
         assertEquals(new BigDecimal("410.00"), response.total());
         verify(events).publishEvent(any(OrderCreatedEvent.class));
+        assertEquals(10, menuItem.getStockAvailable());
     }
 }
