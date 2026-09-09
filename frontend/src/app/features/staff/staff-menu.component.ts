@@ -1,7 +1,8 @@
+import { staffAutoRefresh } from '../../core/staff-auto-refresh';
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { finalize } from 'rxjs';
+import { finalize, timeout } from 'rxjs';
 import { StaffApiService, StaffMenuItem } from '../../core/staff-api.service';
 import { MenuEditorComponent } from './menu-editor.component';
 import { CartStore } from '../../core/cart.store';
@@ -11,12 +12,11 @@ import { NotificationService } from '../../core/notification.service';
   selector: 'app-staff-menu', imports: [CurrencyPipe, MenuEditorComponent],
   template: `
     <div class="menu-tools">
-      <button type="button" class="add-product" (click)="addProduct()">+ Add product</button>
+      <button type="button" class="add-product" (click)="addProduct()" [disabled]="loading()">+ Add product</button>
       <label>Search menu<input type="search" placeholder="Name or category" [value]="query()" (input)="query.set($any($event.target).value)"></label>
-      <button type="button" (click)="load()" [disabled]="loading()">{{ loading() ? 'Loading…' : 'Refresh menu' }}</button>
     </div>
     @if (error()) { <p role="alert">{{ error() }}</p> }
-    @if (loading()) { <p role="status">Loading menu…</p> }
+    @if (loading() && !items().length) { <p role="status">Loading menu…</p> }
     @else {
       <p class="menu-count">{{ filtered().length }} menu items · Includes active and hidden items</p>
       <div class="staff-menu-grid">
@@ -26,13 +26,13 @@ import { NotificationService } from '../../core/notification.service';
             <div class="menu-copy"><span class="category">{{ item.category }}</span><h2>{{ item.name }}</h2><p>{{ item.description }}</p>
               <div class="menu-price"><strong>{{ item.price | currency:'PHP' }}</strong><span [class.hidden-item]="!item.active">{{ item.active ? 'Published' : 'Hidden' }}</span></div>
               <p class="stock-count">{{ item.stockAvailable == null ? 'Stock not set' : item.stockAvailable === 0 ? 'Sold out' : item.stockAvailable + ' portions available' }}</p>
-              <button type="button" class="edit-item" (click)="editing.set(item)" [attr.aria-label]="'Edit ' + item.name">Edit item</button>
+              <button type="button" class="edit-item" (click)="editing.set(item)" [disabled]="loading()" [attr.aria-label]="'Edit ' + item.name">Edit item</button>
             </div>
           </article>
         } @empty { @if (!error()) { <p>No menu items match your search.</p> } }
       </div>
     }
-    @if (editing(); as item) { <app-menu-editor [item]="item" [categories]="categories()" (dismissed)="editing.set(null)" (saved)="onSaved($event)" /> }`,
+    @if (editing(); as item) { <app-menu-editor [item]="item" [categories]="categories()" (dismissed)="editing.set(null); load()" (saved)="onSaved($event)" /> }`,
   styleUrl: './staff-menu.component.css', changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StaffMenuComponent {
@@ -48,7 +48,7 @@ export class StaffMenuComponent {
   readonly error = signal('');
   readonly filtered = computed(() => this.items().filter(item =>
     `${item.name} ${item.category}`.toLowerCase().includes(this.query().trim().toLowerCase())));
-  constructor() { this.load(); }
+  constructor() { this.load(); staffAutoRefresh(() => this.load()); }
   addProduct(): void {
     this.editing.set({id:'',name:'',category:'Classics',description:'',price:0,stockAvailable:0,active:true,version:0,imageUrl:'/menu-placeholder.svg'});
   }
@@ -60,11 +60,11 @@ export class StaffMenuComponent {
     this.editing.set(null); this.cart.refreshMenu(); this.notifications.show(`${item.name} was ${created ? 'added to the menu' : 'updated'}.`);
   }
   load(): void {
-    if (this.loading()) return;
+    if (this.loading() || this.editing()) return;
     this.loading.set(true); this.error.set('');
-    this.api.getMenu().pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false))).subscribe({
+    this.api.getMenu().pipe(timeout(10000), takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false))).subscribe({
       next: items => this.items.set(items),
-      error: () => this.error.set('Menu could not be loaded. Check your connection and try Refresh menu.')
+      error: () => this.error.set('Menu could not be loaded. Check your connection. Updates will retry automatically.')
     });
   }
 }

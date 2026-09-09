@@ -43,7 +43,7 @@ Complete the local `.env` using the project's **Connect → Session pooler** det
 - `SUPABASE_PUBLISHABLE_KEY`: copy the publishable key from **Settings → API Keys**.
 - `STAFF_USER_IDS`: add only the UUIDs of intended staff accounts from **Authentication → Users**.
 
-Start the backend from `backend/` once the database values are filled. Flyway applies all pending migrations through V7 (persisted store status), and Hibernate validates the resulting schema. Let Flyway apply these files; manually running them in the SQL editor leaves Flyway's history out of sync. The configured `postgres` database role can access the tables; browser roles have no policies or application table privileges. See [Supabase row-level security](https://supabase.com/docs/guides/database/postgres/row-level-security).
+Start the backend from `backend/` once the database values are filled. Flyway applies all pending migrations through V9 (one feedback per order), and Hibernate validates the resulting schema. Let Flyway apply these files; manually running them in the SQL editor leaves Flyway's history out of sync. The configured `postgres` database role can access the tables; browser roles have no policies or application table privileges. See [Supabase row-level security](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
 Verify `http://localhost:8080/actuator/health` returns `UP` and `http://localhost:8080/api/v1/menu` returns eight menu items. Staff login additionally requires the publishable key and staff allowlist; leave the allowlist empty until the intended staff UUIDs are known.
 
@@ -94,9 +94,9 @@ The staff **Menu** tab reads the existing Supabase `menu_items` table through th
 
 Customers see portions available. Shared menu and store-status checks run every 15 seconds while the application is visible, and on focus, returning to the tab, and reconnecting. Checkout checks availability again before submission. Failed checks, removed products, or insufficient portions block ordering. Removed products remain in the cart for review and removal. Existing dishes have unknown stock until staff enters a count; unknown or zero stock cannot be ordered. Menu portions are separate from ingredient inventory quantities.
 
-Checkout creates a **submitted** order without deducting stock. In **Staff → Orders**, use **Confirm order** to deduct its portions and mark it **confirmed**. The database checks and locks all affected dishes within the confirmation transaction. Insufficient stock rolls the confirmation back; repeating confirmation of an already confirmed order does not deduct twice. Confirmation records the staff UUID and time. The Orders screen lists the oldest 100 pending orders; refresh after confirming to load more. Pending orders do not reserve portions, so a later confirmation can fail if another order consumed the remaining stock.
+Checkout creates a **submitted** order without deducting stock. In **Staff → Orders**, use **Confirm order** to deduct its portions and mark it **confirmed**. The database checks and locks all affected dishes within the confirmation transaction. Insufficient stock rolls the confirmation back; repeating confirmation of an already confirmed order does not deduct twice. Confirmation records the staff UUID and time. Staff can also use **Cancel order** on `/staff/orders` for pending orders. Cancellation preserves the order and records the staff UUID and time without changing stock. Repeated cancellation is safe; confirmed orders cannot be cancelled through this action, and cancelled orders cannot be confirmed. `V8__order_cancellation.sql` adds the audit fields through Flyway. Staff lists update automatically every 15 seconds while visible and on returning to the tab or reconnecting. Menu and inventory updates pause during editing, and order updates pause during actions. The Orders search accepts a short order number or full ID and searches all pending orders, displaying up to 100 matches. Pending orders do not reserve portions, so a later confirmation can fail if another order consumed the remaining stock.
 
-`V6__menu_editing.sql` adds menu photos, stock counts, edit versions, and confirmation audit fields. It is applied to the configured project. If a staff page was open during the update, close its editor and click **Refresh menu** before editing again.
+`V6__menu_editing.sql` adds menu photos, stock counts, edit versions, and confirmation audit fields. It is applied to the configured project. If a staff page was open during the update, close its editor and wait for the menu to update before editing again.
 
 The **Inventory / Add item** form no longer includes photo upload or preview. Existing inventory photos and backend photo-upload support remain available. The backend limits images to 2 MB and 12 megapixels, validates and re-encodes them to discard metadata, and saves an uploaded photo, item, and opening stock movement together. Photos are stored in the database's `inventory_photos` table, with RLS and revoked browser-role privileges; viewing a photo requires staff authentication. This bounded database storage works without additional storage credentials. A larger image catalogue should move to object storage.
 
@@ -113,11 +113,15 @@ Remove-Item Env:SUPABASE_INTEGRATION_TESTS
 
 ## Store status and home sections
 
-Staff can open or close ordering from the dashboard. Closing blocks new checkout requests at the backend; pending orders can still be confirmed. Status persists through `V7__store_status.sql`, applied to the configured project on 9 September 2026. Displayed opening hours do not automatically open or close the store.
+Staff can open or close ordering in **Staff / Store** at `/staff/store`. Closing blocks new checkout requests at the backend; pending orders can still be confirmed. Status persists through `V7__store_status.sql`, applied to the configured project on 9 September 2026. Displayed opening hours do not automatically open or close the store.
 
 Home contains the hero, history/about, feedback, and contact sections. The old `/about` and `/feedback` routes redirect to the matching home anchors. Footer links lead to the privacy and ordering policy. Owner review of policy wording and historical claims remains required before public release.
 
 The September home/store changes still require browser checks at 320, 375, 768, 1024, and desktop widths; earlier inventory layout checks do not verify these new changes. See [the current handoff](docs/CONTINUE-HERE.md).
+
+## Customer feedback
+
+Feedback requires an existing order number: the 8-character number shown at checkout or the full order ID. Each order accepts one submission. Repeat submissions show an already-submitted message. The anonymity toggle has been removed; feedback is linked to its order. V9 adds the order reference and database uniqueness rule while preserving historical feedback without an order reference.
 
 ## Verify
 

@@ -23,6 +23,8 @@ public class Order {
     private String status;
     @Column(name = "confirmed_by") private String confirmedBy;
     @Column(name = "confirmed_at") private OffsetDateTime confirmedAt;
+    @Column(name = "cancelled_by") private String cancelledBy;
+    @Column(name = "cancelled_at") private OffsetDateTime cancelledAt;
     @Column(name = "created_at") private OffsetDateTime createdAt;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -40,6 +42,9 @@ public class Order {
     public BigDecimal getTotal() { return total; }
     public String getStatus() { return status; }
     public void confirm(String staffId) { status = "confirmed"; confirmedBy = staffId; confirmedAt = OffsetDateTime.now(); }
+    public void cancel(String staffId) { status = "cancelled"; cancelledBy = staffId; cancelledAt = OffsetDateTime.now(); }
+    public String getCancelledBy() { return cancelledBy; }
+    public OffsetDateTime getCancelledAt() { return cancelledAt; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public List<OrderItem> getItems() { return List.copyOf(items); }
 }

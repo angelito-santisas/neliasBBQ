@@ -2,6 +2,32 @@
 
 ## Current checkpoint (supersedes the historical notes below)
 
+Repository delivery: these changes and [the 9 September session log](session-recap-2026-09-09.md) are included in the follow-up commit for main. Earlier local/unpushed notes below describe the state before this delivery.
+
+### Feedback order-number requirement
+
+- Removed Submit Anonymously and replaced it with a required order-number input. Accepts the 8-character checkout number or the full UUID, case-insensitively. Unknown/malformed numbers are rejected; ambiguous short numbers require the full UUID.
+- Feedback is linked to an existing order. The service locks that order before checking for previous feedback, and V9 adds a unique order reference as a database safeguard. Repeated submissions return HTTP 409: "Feedback has already been submitted for this order number."
+- Existing feedback is preserved with a null order reference; V9 requires an order reference for new entries. The legacy anonymous column remains for historical compatibility, but is no longer accepted by the request/form.
+- The form resets after success, prevents double submission while saving, and displays server errors inline. README and privacy text now describe order-linked feedback.
+- Frontend build and 19 tests passed. Backend clean verify passed: 30 passed, 6 opt-in integration tests skipped. V9 was applied through Flyway; both feedback database integration tests passed using synthetic rows rolled back afterward. The updated backend was started as PID 16548, superseding earlier PIDs below. Visual browser checks remain pending; changes remain local and unpushed.
+
+### Staff Orders and Store follow-up
+
+- Updated backend left running on port 8080, PID 4504 (supersedes earlier PIDs below).
+- Staff refresh buttons were removed. Menu, Orders, and inventory/overview update every 15 seconds while visible and on focus, reconnect, and returning to the tab. Requests time out after 10 seconds and retry on the next update. Edits/actions pause polling; old inventory responses cannot replace a newer save. Store uses the existing shared availability polling.
+- Orders now supports server-side search by short or full order ID across all pending orders, returning up to 100 matches. Search is debounced and retained during automatic updates; stale search responses are discarded. Confirmed/cancelled order history is not part of this pending-order search.
+- Automatic-refresh/search tests passed: 17 frontend tests, 26 backend unit/security tests, plus a separate read-only Supabase order-search integration test. The database check passed without creating or changing customer orders. Backend packaging passed. Browser checks remain pending.
+
+- `/staff/orders` provides Confirm order and Cancel order for pending orders. Cancellation retains the order, records staff/time, and leaves stock unchanged. Cancel and confirm acquire the same order lock; cancelled orders cannot be confirmed, confirmed orders cannot be cancelled, and cancellation retries retain the original audit fields.
+- `/staff/store` contains the open/close control, removed from other staff sections. All staff workspace sections now use guarded routes; inventory shortcut filters are carried in the URL.
+- Customer-facing status badges/cards and refresh/closure notices were removed as requested; menu item buttons still show Store closed and ordering restrictions remain active.
+- Flyway applied V8 successfully on 9 September. Restarted backend PID **18996** returned health UP; anonymous cancellation returned 401. This PID supersedes the older runtime note below. No real customer order was cancelled or created for verification.
+- Verification: backend clean verify passed (25 passed, 3 integration tests skipped); frontend build and 15 tests passed, including cancellation success/failure, competing-action prevention, and direct staff navigation.
+- Browser discovery still returned no connected browsers. Responsive visual checks and real authenticated interactions remain pending. These follow-up changes are local and have not been committed or pushed.
+
+### Earlier verification
+
 - Initial allowance check: the current session record showed 97% of the five-hour allowance remaining. Continue respecting the stop-below-10% rule; never consume account reset credits automatically.
 - No Java backend was listening on 8080 at initial inspection. `mvn clean verify` succeeded, including JAR repackaging; the previous JAR-lock issue is resolved.
 - Started the backend and let Flyway apply V7 to the configured Supabase database. Logs confirmed V6 -> V7. No manual migration was run.

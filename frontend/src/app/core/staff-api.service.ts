@@ -31,14 +31,19 @@ export class StaffApiService {
     return headers ? this.http.get<StaffMenuItem[]>('/api/v1/staff/menu', { headers }) : this.signedOut();
   }
 
-  getPendingOrders(): Observable<StaffOrder[]> {
+  getPendingOrders(number = ''): Observable<StaffOrder[]> {
     const headers = this.headers();
-    return headers ? this.http.get<StaffOrder[]>('/api/v1/staff/orders', {headers}) : this.signedOut();
+    return headers ? this.http.get<StaffOrder[]>('/api/v1/staff/orders', {headers, params: number.trim() ? { number: number.trim() } : {}}) : this.signedOut();
   }
 
   confirmOrder(id: string): Observable<StaffOrder> {
     const headers = this.headers();
     return headers ? this.http.post<StaffOrder>(`/api/v1/staff/orders/${encodeURIComponent(id)}/confirm`, {}, {headers}) : this.signedOut();
+  }
+
+  cancelOrder(id: string): Observable<StaffOrder> {
+    const headers = this.headers();
+    return headers ? this.http.post<StaffOrder>(`/api/v1/staff/orders/${encodeURIComponent(id)}/cancel`, {}, {headers}) : this.signedOut();
   }
 
   updateMenuItem(id: string, request: UpdateMenuItemRequest, photo?: File | null): Observable<StaffMenuItem> {

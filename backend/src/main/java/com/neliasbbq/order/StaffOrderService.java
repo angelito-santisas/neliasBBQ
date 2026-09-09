@@ -21,6 +21,25 @@ public class StaffOrderService {
         return orders.findTop100ByStatusOrderByCreatedAtAsc("submitted").stream().map(OrderResponse::from).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<OrderResponse> pending(String number) {
+        String query = number == null ? "" : number.trim().toLowerCase(java.util.Locale.ROOT);
+        if (query.isEmpty()) return pending();
+        if (!query.matches("[0-9a-f-]{1,36}")) return List.of();
+        return orders.searchPending(query).stream().map(OrderResponse::from).toList();
+    }
+
+    @Transactional
+    public OrderResponse cancel(UUID id, String staffId) {
+        Order order = orders.findByIdForUpdate(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order was not found."));
+        if ("cancelled".equals(order.getStatus())) return OrderResponse.from(order);
+        if (!"submitted".equals(order.getStatus())) throw new BadRequestException("Only pending orders can be cancelled.");
+        // Pending orders do not reserve stock. Share the confirmation lock so only one action wins.
+        order.cancel(staffId);
+        return OrderResponse.from(order);
+    }
+
     @Transactional
     public OrderResponse confirm(UUID id, String staffId) {
         Order order = orders.findByIdForUpdate(id)

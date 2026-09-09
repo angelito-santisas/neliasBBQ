@@ -74,7 +74,7 @@ export class MenuEditorComponent {
   save(): void {
     if (this.saving() || this.form.invalid || this.photoError()) return;
     if (!this.isNew() && !Number.isInteger(this.item().version)) {
-      this.error.set('This menu was loaded before the server update. Close the editor, click Refresh menu, and reopen the item.'); return;
+      this.error.set('This menu was loaded before the server update. Close the editor and reopen the item after the menu updates.'); return;
     }
     const value = this.form.getRawValue();
     if (value.stockAvailable === null) return;
@@ -87,7 +87,7 @@ export class MenuEditorComponent {
         next: item => { this.dialog().nativeElement.close(); this.saved.emit(item); },
         error: err => this.error.set(err?.error?.detail || (err.status === 401 || err.status === 403
           ? 'Your staff session has expired or this request was denied. Sign in again and retry.'
-          : err.status === 400 ? 'Check the title, description, price, and stock count. Refresh the menu if this editor was already open during a server update.'
+          : err.status === 400 ? 'Check the title, description, price, and stock count. Close and reopen this editor if it was open during a server update.'
           : 'Changes could not be saved. Check your connection and try again.'))
       });
   }

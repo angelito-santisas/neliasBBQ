@@ -10,5 +10,5 @@ public record CreateFeedbackRequest(
     @Min(1) @Max(5) Integer foodQualityRating,
     @NotNull Boolean wouldRecommend,
     @Size(max = 1000) String comments,
-    @NotNull Boolean anonymous
+    @jakarta.validation.constraints.NotBlank @Size(max = 36) String orderNumber
 ) {}

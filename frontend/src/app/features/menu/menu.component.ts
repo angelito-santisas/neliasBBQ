@@ -11,8 +11,6 @@ import { CartStore } from '../../core/cart.store';
       <div class="section-header"><h2>Our Barbecue Selection</h2><p>Authentic Filipino offal and skewers, slow-roasted over premium hardwood charcoal and glazed with heirloom marinades.</p></div>
       @if (cart.loading()) { <p class="load-message">Loading menu…</p> }
       @if (cart.menuError(); as error) { <p class="load-error">{{ error }}</p> }
-      @if (cart.storeOpen() === false) { <p class="availability-note" role="status">The store is closed. Browse the menu and order when we reopen.</p> }
-      <p class="availability-note">Product availability refreshes every 15 seconds.</p>
       @if (!cart.loading() && !cart.menuError()) {
         <div class="category-filters" role="group" aria-label="Filter menu by category">
           <button type="button" [attr.aria-pressed]="selectedCategory() === null" (click)="selectedCategory.set(null)">All</button>

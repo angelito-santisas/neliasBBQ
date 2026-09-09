@@ -32,7 +32,7 @@ export interface FeedbackRequest {
   foodQualityRating: number | null;
   wouldRecommend: boolean;
   comments: string;
-  anonymous: boolean;
+  orderNumber: string;
 }
 
 export interface CreatedResource {

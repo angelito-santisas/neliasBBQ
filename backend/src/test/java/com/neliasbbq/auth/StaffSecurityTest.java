@@ -24,18 +24,35 @@ class StaffSecurityTest {
         @Bean StaffAuthController controller(StaffAuthService auth) { return new StaffAuthController(auth); }
         @Bean com.neliasbbq.store.StoreService store() { return mock(com.neliasbbq.store.StoreService.class); }
         @Bean com.neliasbbq.store.StoreController storeController(com.neliasbbq.store.StoreService store) { return new com.neliasbbq.store.StoreController(store); }
+        @Bean com.neliasbbq.order.StaffOrderService orders() { return mock(com.neliasbbq.order.StaffOrderService.class); }
+        @Bean com.neliasbbq.order.StaffOrderController orderController(com.neliasbbq.order.StaffOrderService orders) { return new com.neliasbbq.order.StaffOrderController(orders); }
         @Bean com.neliasbbq.config.WebConfig cors() { return new com.neliasbbq.config.WebConfig("http://localhost:4200"); }
     }
     @Autowired WebApplicationContext context;
     @Autowired StaffAuthService auth;
     @Autowired com.neliasbbq.store.StoreService store;
+    @Autowired com.neliasbbq.order.StaffOrderService orders;
     MockMvc mvc;
     @BeforeEach void setup() {
-        reset(auth, store);
+        reset(auth, store, orders);
         mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
     }
     @Test void anonymousIsRejected() throws Exception {
         mvc.perform(get("/api/v1/staff/me").servletPath("/api/v1/staff/me")).andExpect(status().isUnauthorized());
+    }
+    @Test void cancellationRequiresVerifiedStaffAndPassesTheirIdentity() throws Exception {
+        var id = java.util.UUID.randomUUID();
+        String path = "/api/v1/staff/orders/" + id + "/cancel";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).servletPath(path))
+            .andExpect(status().isUnauthorized());
+        when(auth.verify("invalid")).thenThrow(new IllegalArgumentException());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).servletPath(path)
+            .header("Authorization", "Bearer invalid")).andExpect(status().isForbidden());
+        verifyNoInteractions(orders);
+        when(auth.verify("valid")).thenReturn("staff-id");
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path).servletPath(path)
+            .header("Authorization", "Bearer valid")).andExpect(status().isOk());
+        verify(orders).cancel(id, "staff-id");
     }
     @Test void storeStatusIsPublicButChangesRequireStaff() throws Exception {
         when(store.status()).thenReturn(new com.neliasbbq.store.StoreService.Status(true));

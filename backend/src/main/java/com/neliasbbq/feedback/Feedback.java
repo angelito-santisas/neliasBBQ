@@ -20,12 +20,14 @@ public class Feedback {
     @Column(name = "would_recommend") private boolean wouldRecommend;
     private String comments;
     private boolean anonymous;
+    @Column(name = "order_id") private UUID orderId;
     @Column(name = "created_at") private OffsetDateTime createdAt;
 
     protected Feedback() {}
-    public Feedback(int overallRating, Integer foodQualityRating, boolean wouldRecommend, String comments, boolean anonymous) {
+    public Feedback(int overallRating, Integer foodQualityRating, boolean wouldRecommend, String comments, UUID orderId) {
         this.id = UUID.randomUUID(); this.overallRating = overallRating; this.foodQualityRating = foodQualityRating;
-        this.wouldRecommend = wouldRecommend; this.comments = comments; this.anonymous = anonymous; this.createdAt = OffsetDateTime.now();
+        this.wouldRecommend = wouldRecommend; this.comments = comments; this.anonymous = false; this.orderId = orderId; this.createdAt = OffsetDateTime.now();
     }
     public UUID getId() { return id; }
+    public UUID getOrderId() { return orderId; }
 }

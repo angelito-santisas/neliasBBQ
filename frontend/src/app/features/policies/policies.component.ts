@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
       <div class="section-header"><h1>Privacy & ordering policy</h1><p>Information for customers of Nelia's BBQ.</p></div>
       <article id="privacy" class="home-stack">
         <h2>Privacy</h2>
-        <p>When you place an order, we record the selected products, quantities, prices, time, and special instructions so our staff can handle your order. Feedback includes the ratings, comments, recommendation choice, and anonymity preference you submit.</p>
+        <p>When you place an order, we record the selected products, quantities, prices, time, and special instructions so our staff can handle your order. Feedback includes your ratings, comments, and recommendation choice, and is linked to the order number you provide. Each order can receive one feedback submission.</p>
         <p>Your cart quantities are saved in this browser so you can return to your order. Remove items or clear your browser's site data to clear that saved cart. Staff sign-in is for authorized staff accounts; its session is kept in memory and cleared on refresh or sign-out.</p>
         <p>This site uses externally hosted fonts and images. Their providers receive the network information needed to deliver those resources. Following a Facebook link takes you to Facebook, which has its own privacy policy.</p>
         <p>Please avoid including sensitive personal information in feedback or order instructions. For questions about your information, or to request a correction or deletion, email <a href="mailto:asantisas7@gmail.com">asantisas7&#64;gmail.com</a>.</p>

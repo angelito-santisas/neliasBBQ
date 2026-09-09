@@ -1,3 +1,4 @@
+import { staffAutoRefresh } from '../../core/staff-auto-refresh';
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -6,14 +7,14 @@ import { StaffMenuComponent } from './staff-menu.component';
 import { StaffOrdersComponent } from './staff-orders.component';
 import { StoreControlComponent } from './store-control.component';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { finalize, timeout } from 'rxjs';
 import { StaffApiService } from '../../core/staff-api.service';
 import { StaffAuthService } from '../../core/staff-auth.service';
 import { NotificationService } from '../../core/notification.service';
 import { InventoryItem, InventoryMovementType, InventoryStatus } from '../../shared/models';
 
-type StaffView = 'overview' | 'inventory' | 'menu' | 'orders';
+type StaffView = 'overview' | 'inventory' | 'menu' | 'orders' | 'store';
 type StockFilter = 'ALL' | InventoryStatus;
 
 @Component({
@@ -24,15 +25,16 @@ type StockFilter = 'ALL' | InventoryStatus;
         <div class="staff-brand"><span class="brand-mark" aria-hidden="true">N</span><span><strong>Nelia's BBQ</strong><small>Staff portal</small></span></div>
         <nav class="staff-nav" aria-label="Staff navigation">
           <p>Workspace</p>
-          <button type="button" [class.active]="view() === 'overview'" (click)="view.set('overview')">
+          <button type="button" [class.active]="view() === 'overview'" (click)="navigate('overview')">
             <span aria-hidden="true">⌂</span> Overview
           </button>
-          <button type="button" [class.active]="view() === 'inventory'" (click)="view.set('inventory')">
+          <button type="button" [class.active]="view() === 'inventory'" (click)="navigate('inventory')">
             <span aria-hidden="true">▦</span> Inventory
             @if (attentionCount() > 0) { <b>{{ attentionCount() }}</b> }
           </button>
-          <button type="button" [class.active]="view() === 'menu'" (click)="view.set('menu')"><span aria-hidden="true">☷</span> Menu</button>
-          <button type="button" [class.active]="view() === 'orders'" (click)="view.set('orders')"><span aria-hidden="true">▤</span> Orders</button>
+          <button type="button" [class.active]="view() === 'menu'" (click)="navigate('menu')"><span aria-hidden="true">☷</span> Menu</button>
+          <button type="button" [class.active]="view() === 'orders'" (click)="navigate('orders')"><span aria-hidden="true">▤</span> Orders</button>
+          <button type="button" [class.active]="view() === 'store'" (click)="navigate('store')"><span aria-hidden="true">&#9673;</span> Store</button>
           <button type="button" class="mobile-logout" (click)="logout()"><span aria-hidden="true">↪</span> Sign out</button>
         </nav>
         <div class="staff-sidebar-footer">
@@ -46,23 +48,24 @@ type StockFilter = 'ALL' | InventoryStatus;
         <header class="staff-header">
           <div>
             <p class="eyebrow">Operations</p>
-            <h1>{{ view() === 'overview' ? 'Good day, team' : view() === 'menu' ? 'Menu' : view() === 'orders' ? 'Orders' : 'Inventory' }}</h1>
-            <p>{{ view() === 'overview' ? 'Here is what needs your attention today.' : view() === 'menu' ? 'Manage dishes, pictures, prices, and available stock.' : view() === 'orders' ? 'Review and confirm customer orders.' : 'Track ingredients, supplies, and stock levels.' }}</p>
+            <h1>{{ view() === 'overview' ? 'Good day, team' : view() === 'menu' ? 'Menu' : view() === 'orders' ? 'Orders' : view() === 'store' ? 'Store' : 'Inventory' }}</h1>
+            <p>{{ view() === 'overview' ? 'Here is what needs your attention today.' : view() === 'menu' ? 'Manage dishes, pictures, prices, and available stock.' : view() === 'orders' ? 'Review, confirm, or cancel pending customer orders.' : view() === 'store' ? 'Open or close the store for customer orders.' : 'Track ingredients, supplies, and stock levels.' }}</p>
           </div>
           @if (view() === 'inventory') {
             <button type="button" class="staff-primary" (click)="openAddItem()"><span aria-hidden="true">＋</span> Add item</button>
           }
         </header>
 
-        <app-store-control />
         @if (view() === 'menu') {
           <app-staff-menu />
+        } @else if (view() === 'store') {
+          <app-store-control />
         } @else if (view() === 'orders') {
           <app-staff-orders />
-        } @else if (loading()) {
+        } @else if (loading() && !items().length) {
           <div class="staff-state" role="status"><span class="spinner" aria-hidden="true"></span> Loading inventory…</div>
         } @else if (loadError()) {
-          <div class="staff-state error" role="alert"><strong>Inventory could not be loaded.</strong><span>{{ loadError() }}</span><button type="button" (click)="loadInventory()">Try again</button></div>
+          <div class="staff-state error" role="alert"><strong>Inventory could not be loaded.</strong><span>{{ loadError() }}</span><span>Updates will retry automatically.</span></div>
         } @else if (view() === 'overview') {
           <div class="metric-grid">
             <article><span class="metric-icon gold" aria-hidden="true">▦</span><div><p>Total items</p><strong>{{ items().length }}</strong><small>Active inventory lines</small></div></article>
@@ -182,12 +185,14 @@ export class StaffDashboardComponent {
   private readonly api = inject(StaffApiService);
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private modalOpener: HTMLElement | null = null;
 
   readonly items = signal<InventoryItem[]>([]);
-  readonly loading = signal(true);
+  private inventoryRevision = 0;
+  readonly loading = signal(false);
   readonly loadError = signal('');
   readonly saving = signal(false);
   readonly formError = signal('');
@@ -230,6 +235,11 @@ export class StaffDashboardComponent {
   });
 
   constructor() {
+    this.route.data.pipe(takeUntilDestroyed()).subscribe(data => this.view.set(data['view'] ?? 'overview'));
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const filter = params.get('stock');
+      this.stockFilter.set(filter === 'LOW_STOCK' || filter === 'OUT_OF_STOCK' || filter === 'IN_STOCK' ? filter : 'ALL');
+    });
     this.search.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => this.searchTerm.set(value));
     effect(onCleanup => {
       if (!this.modal()) return;
@@ -238,17 +248,22 @@ export class StaffDashboardComponent {
       onCleanup(() => document.body.style.overflow = previousOverflow);
     });
     this.loadInventory();
+    staffAutoRefresh(() => { if (this.view() === 'overview' || this.view() === 'inventory') this.loadInventory(); });
   }
 
   loadInventory(): void {
+    if (this.loading() || this.modal() || this.saving()) return;
+    const revision = this.inventoryRevision;
     this.loading.set(true); this.loadError.set('');
-    this.api.getInventory().pipe(finalize(() => this.loading.set(false))).subscribe({
-      next: items => this.items.set(items),
+    this.api.getInventory().pipe(timeout(10000), takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false))).subscribe({
+      next: items => { if (revision === this.inventoryRevision) this.items.set(items); },
       error: error => this.loadError.set(this.apiError(error, 'Check the server connection and try again.'))
     });
   }
 
-  showInventory(filter: StockFilter): void { this.stockFilter.set(filter); this.view.set('inventory'); }
+  navigate(view: StaffView): void { void this.router.navigateByUrl(view === 'overview' ? '/staff' : `/staff/${view}`); }
+
+  showInventory(filter: StockFilter): void { void this.router.navigate(['/staff/inventory'], { queryParams: { stock: filter } }); }
   countFor(filter: StockFilter): number { return filter === 'ALL' ? this.items().length : this.items().filter(item => item.status === filter).length; }
   statusLabel(status: InventoryStatus): string { return status === 'OUT_OF_STOCK' ? 'Out of stock' : status === 'LOW_STOCK' ? 'Low stock' : 'In stock'; }
 
@@ -297,6 +312,7 @@ export class StaffDashboardComponent {
 
   createItem(): void {
     if (this.addForm.invalid || this.saving()) return;
+    this.inventoryRevision++;
     this.saving.set(true); this.formError.set('');
     this.api.createInventoryItem(this.addForm.getRawValue()).pipe(finalize(() => this.saving.set(false))).subscribe({
       next: item => { this.items.update(items => [...items, item].sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name))); this.saving.set(false); this.closeModal(); this.notifications.show(`${item.name} was added to inventory.`); },
@@ -307,6 +323,7 @@ export class StaffDashboardComponent {
   saveAdjustment(): void {
     const item = this.selectedItem();
     if (!item || this.adjustForm.invalid || this.saving() || this.adjustedQuantity(item) < 0) return;
+    this.inventoryRevision++;
     this.saving.set(true); this.formError.set('');
     this.api.adjustInventory(item.id, { ...this.adjustForm.getRawValue(), movementType: this.movementType() })
       .pipe(finalize(() => this.saving.set(false))).subscribe({

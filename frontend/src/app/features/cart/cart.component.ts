@@ -31,9 +31,7 @@ import { NotificationService } from '../../core/notification.service';
           <h3>Order Summary</h3><div class="summary-row"><span>Subtotal</span><span>{{ cart.subtotal() | currency:'PHP' }}</span></div><div class="summary-row"><span>Service & Packaging Fee</span><span>{{ serviceFee() | currency:'PHP' }}</span></div><div class="summary-row total"><span>Total</span><span>{{ cart.subtotal() + serviceFee() | currency:'PHP' }}</span></div>
           <div class="form-group"><label for="instructions">Special Instructions</label><textarea id="instructions" rows="3" maxlength="300" [(ngModel)]="instructions" [disabled]="submitting()"></textarea></div>
           @if (cart.exceedsStock()) { <p role="alert">Stock has changed. Reduce your quantities before checking out.</p> }
-          @if (cart.storeOpen() === false) { <p role="status">The store is closed. Your cart is saved for later.</p> }
           @if (cart.menuError(); as error) { <p role="alert">{{ error }}</p> }
-          <p>Availability refreshes every 15 seconds and is checked again at checkout.</p>
           <button type="button" class="btn btn-outline" (click)="cart.refreshMenu()" [disabled]="submitting()">Refresh availability</button>
           <p>Orders await staff confirmation. Stock is deducted when staff confirms.</p>
           <button class="btn btn-primary full-width" type="button" (click)="checkout()" [disabled]="!cart.lines().length || submitting() || cart.exceedsStock() || !cart.canOrder()">{{ submitting() ? 'Checking & submitting…' : 'Proceed To Checkout' }}</button>

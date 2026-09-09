@@ -929,8 +929,6 @@
 .contact-grid address { font-style: normal; color: var(--text-muted); line-height: 1.7; }
 .contact-grid a, .policy-page a, .footer-links a { color: var(--accent-gold-light); overflow-wrap: anywhere; }
 .footer-links { justify-content: center; flex-wrap: wrap; gap: 1rem 2rem; margin-top: 1rem; }
-.store-status { border: 1px solid #65855b; color: #c5dfa7; border-radius: 30px; padding: .4rem .7rem; font-size: .75rem; white-space: nowrap; }
-.store-status.store-closed { border-color: #965b45; color: #efb6a3; }
 .availability-note { margin-block: .75rem; }
 .policy-page { max-width: 850px; margin: auto; }
 .policy-page .home-stack { scroll-margin-top: 160px; }
@@ -946,7 +944,6 @@
   .hero-spotlight-beam { max-width: 45%; }
   .brand-logo { font-size: 1.5rem; }
   header nav { gap: .85rem; }
-  .store-status { font-size: .7rem; }
   footer { padding: 2rem 1rem; }
 }
 @media (prefers-reduced-motion: reduce) {
