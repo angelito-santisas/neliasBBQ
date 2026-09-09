@@ -1,4 +1,35 @@
-# Continue here — 8 September 2026
+# Continue here — 9 September 2026
+
+## Current checkpoint (supersedes the historical notes below)
+
+- Initial allowance check: the current session record showed 97% of the five-hour allowance remaining. Continue respecting the stop-below-10% rule; never consume account reset credits automatically.
+- No Java backend was listening on 8080 at initial inspection. `mvn clean verify` succeeded, including JAR repackaging; the previous JAR-lock issue is resolved.
+- Started the backend and let Flyway apply V7 to the configured Supabase database. Logs confirmed V6 -> V7. No manual migration was run.
+- Health returned UP, GET `/api/v1/store` returned `{"open":true}`, and anonymous PUT `/api/v1/staff/store` returned 401 without changing business status.
+- Restarted the backend: Flyway reported V7 up to date, health remained UP, and status remained open. This verifies existing status across restart, not persistence of a staff toggle.
+- Added server tests for public status access, anonymous mutation rejection, authenticated mutation with mocked authentication/service boundaries, and empty/missing/null status rejection. Backend verification passed: **20 passed, 3 opt-in database integration tests skipped**.
+- Fixed cart quantity buttons and special instructions remaining editable during checkout. Increase also disables when ordering is unavailable or the stock limit is reached.
+- Added checkout regression tests for disabled controls during checking/submission, duplicate-submission prevention, and cart retention/unlocking after failure.
+- Added a regression test proving an older heartbeat cannot overwrite a completed staff closure, including authorization-header and duplicate-toggle checks.
+- Frontend verification: **12 tests passed across 5 files; production build passed**.
+- Updated README descriptions for inventory photos, shared availability checks, migrations, store status, and home sections.
+
+## Remaining work
+
+1. Connect a browser. Runtime setup succeeded, but selection reported no browser available and discovery returned an empty list. No responsive screenshots, keyboard checks, or authenticated browser checks were possible. **Do not call the UI complete.**
+2. Verify real staff sign-in, store toggling, changed-status persistence after restart, and direct closed-store checkout rejection using controlled data or a local test database. Automated security tests mock authentication/service boundaries. Do not casually close the business or create real customer orders.
+3. Perform the two-session checks in historical steps 5–7 below, including all five responsive widths, background recovery, failed connections, navigation/anchors, feedback, contact links, and keyboard focus. Automated tests cover some scenarios, but do not replace these browser checks.
+4. Owner review of policy wording and historical/about claims remains required before public release.
+
+## Current runtime
+
+Backend left running on port 8080, PID 5732 at this checkpoint, from `target/backend-0.0.1-SNAPSHOT.jar`. Verify current PID/command line before stopping it; stop only the matching backend before repackaging. An existing frontend listener was found on port 4200, PID 13024; it was not restarted.
+
+User-scope JAVA_HOME was absent, but `java.exe` and `mvn.cmd` were available on PATH. Java resolved to the local Eclipse Adoptium JDK 17 installation. Only copy JAVA_HOME/MAVEN_HOME from user settings when their values exist. Preserve the ignored root `.env`; never commit runtime logs or build outputs. A Git push does not deploy the application.
+
+---
+
+## Historical handoff — 8 September 2026
 
 ## Why work stopped
 

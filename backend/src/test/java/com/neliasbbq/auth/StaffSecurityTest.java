@@ -22,17 +22,42 @@ class StaffSecurityTest {
     static class Config {
         @Bean StaffAuthService auth() { return mock(StaffAuthService.class); }
         @Bean StaffAuthController controller(StaffAuthService auth) { return new StaffAuthController(auth); }
+        @Bean com.neliasbbq.store.StoreService store() { return mock(com.neliasbbq.store.StoreService.class); }
+        @Bean com.neliasbbq.store.StoreController storeController(com.neliasbbq.store.StoreService store) { return new com.neliasbbq.store.StoreController(store); }
         @Bean com.neliasbbq.config.WebConfig cors() { return new com.neliasbbq.config.WebConfig("http://localhost:4200"); }
     }
     @Autowired WebApplicationContext context;
     @Autowired StaffAuthService auth;
+    @Autowired com.neliasbbq.store.StoreService store;
     MockMvc mvc;
     @BeforeEach void setup() {
-        reset(auth);
+        reset(auth, store);
         mvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
     }
     @Test void anonymousIsRejected() throws Exception {
         mvc.perform(get("/api/v1/staff/me").servletPath("/api/v1/staff/me")).andExpect(status().isUnauthorized());
+    }
+    @Test void storeStatusIsPublicButChangesRequireStaff() throws Exception {
+        when(store.status()).thenReturn(new com.neliasbbq.store.StoreService.Status(true));
+        mvc.perform(get("/api/v1/store").servletPath("/api/v1/store")).andExpect(status().isOk());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/staff/store")
+            .servletPath("/api/v1/staff/store").contentType("application/json").content("{\"open\":false}"))
+            .andExpect(status().isUnauthorized());
+        verify(store, never()).setOpen(anyBoolean(), anyString());
+    }
+    @Test void staffCanChangeStoreButMissingOrNullStatusIsRejected() throws Exception {
+        when(auth.verify("valid")).thenReturn("staff-id");
+        when(store.setOpen(false, "staff-id")).thenReturn(new com.neliasbbq.store.StoreService.Status(false));
+        for (String body : new String[]{"", "{}", "{\"open\":null}"}) {
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/staff/store")
+                .servletPath("/api/v1/staff/store").header("Authorization", "Bearer valid")
+                .contentType("application/json").content(body)).andExpect(status().isBadRequest());
+        }
+        verifyNoInteractions(store);
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/staff/store")
+            .servletPath("/api/v1/staff/store").header("Authorization", "Bearer valid")
+            .contentType("application/json").content("{\"open\":false}")).andExpect(status().isOk());
+        verify(store).setOpen(false, "staff-id");
     }
     @Test void photosAndStaffMenuRequireAuthentication() throws Exception {
         for (String path : new String[]{"/api/v1/staff/photos/00000000-0000-0000-0000-000000000001", "/api/v1/staff/menu"}) {

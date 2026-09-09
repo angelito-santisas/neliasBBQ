@@ -22,14 +22,14 @@ import { NotificationService } from '../../core/notification.service';
                 <p>{{ cart.limitFor(line.item.id) ? cart.limitFor(line.item.id) + ' portions available' : 'Currently unavailable' }}</p>
                 <button type="button" class="remove-item" (click)="cart.remove(line.item.id)" [disabled]="submitting()">Remove</button>
               </div>
-              <div class="qty-controls"><button class="qty-btn" type="button" (click)="cart.changeQuantity(line.item.id, -1)" [attr.aria-label]="'Decrease ' + line.item.name">−</button><span>{{ line.quantity }}</span><button class="qty-btn" type="button" (click)="cart.changeQuantity(line.item.id, 1)" [attr.aria-label]="'Increase ' + line.item.name">+</button></div>
+              <div class="qty-controls"><button class="qty-btn" type="button" (click)="cart.changeQuantity(line.item.id, -1)" [disabled]="submitting()" [attr.aria-label]="'Decrease ' + line.item.name">−</button><span>{{ line.quantity }}</span><button class="qty-btn" type="button" (click)="cart.changeQuantity(line.item.id, 1)" [disabled]="submitting() || !cart.canOrder() || line.quantity >= cart.limitFor(line.item.id)" [attr.aria-label]="'Increase ' + line.item.name">+</button></div>
               <div class="cart-line-total">{{ line.item.price * line.quantity | currency:'PHP' }}</div>
             </div>
           }
         </div>
         <div class="cart-summary">
           <h3>Order Summary</h3><div class="summary-row"><span>Subtotal</span><span>{{ cart.subtotal() | currency:'PHP' }}</span></div><div class="summary-row"><span>Service & Packaging Fee</span><span>{{ serviceFee() | currency:'PHP' }}</span></div><div class="summary-row total"><span>Total</span><span>{{ cart.subtotal() + serviceFee() | currency:'PHP' }}</span></div>
-          <div class="form-group"><label for="instructions">Special Instructions</label><textarea id="instructions" rows="3" maxlength="300" [(ngModel)]="instructions"></textarea></div>
+          <div class="form-group"><label for="instructions">Special Instructions</label><textarea id="instructions" rows="3" maxlength="300" [(ngModel)]="instructions" [disabled]="submitting()"></textarea></div>
           @if (cart.exceedsStock()) { <p role="alert">Stock has changed. Reduce your quantities before checking out.</p> }
           @if (cart.storeOpen() === false) { <p role="status">The store is closed. Your cart is saved for later.</p> }
           @if (cart.menuError(); as error) { <p role="alert">{{ error }}</p> }
