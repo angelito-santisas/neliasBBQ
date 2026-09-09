@@ -16,7 +16,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
             <div class="timeline-item"><div class="timeline-year">2021</div><p>Reimagined as a high-end dark lounge for true BBQ connoisseurs.</p></div>
           </div>
         </div>
-        <div class="hero-image-container"><img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1000&q=80" alt="Grill masters preparing charcoal barbecue"></div>
       </div>
     </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush

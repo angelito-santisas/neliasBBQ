@@ -19,7 +19,7 @@ import { FeedbackComponent } from '../feedback/feedback.component';
           </div>
         </div>
         <div class="hero-image-container">
-          <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1000&q=80" alt="Charcoal-grilled isaw ng manok skewers">
+          <img src="isaw-hero.png" alt="Glazed isaw ng manok skewers over glowing charcoal" width="1254" height="1254" fetchpriority="high">
         </div>
       </div>
     </section>

@@ -237,16 +237,14 @@
 
         .hero-image-container {
             position: relative;
-            border-radius: 16px;
             overflow: hidden;
-            border: 1px solid var(--border-gold);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(212, 175, 55, 0.15);
-            background: var(--bg-card);
+            -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 72%);
+            mask-image: radial-gradient(ellipse at center, #000 40%, transparent 72%);
         }
 
         .hero-image-container img {
             width: 100%;
-            height: 480px;
+            height: clamp(280px, 40vw, 480px);
             object-fit: cover;
             display: block;
             filter: brightness(0.9) contrast(1.1);
@@ -449,18 +447,16 @@
 
         /* ABOUT / HISTORY PAGE STYLES */
         .history-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: center;
+            max-width: 760px;
+            margin-inline: auto;
         }
 
         .history-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-gold);
-            padding: 2.5rem;
-            border-radius: 8px;
             position: relative;
+        }
+
+        .history-card > p + p {
+            margin-top: 1rem;
         }
 
         .history-card h3 {
@@ -891,7 +887,7 @@
         }
 
         @media (max-width: 900px) {
-            .hero, .history-container, .cart-container {
+            .hero, .cart-container {
                 grid-template-columns: 1fr;
             }
             header {
@@ -938,8 +934,6 @@
 .cart-summary > p, .cart-summary > button { margin-top: 1rem; }
 @media (max-width: 600px) {
   .home-stack .hero { min-height: auto; gap: 1.5rem; }
-  .history-card { padding: 1.25rem; }
-  .history-container { gap: 1.5rem; }
   .section-header h2 { font-size: 1.65rem; overflow-wrap: anywhere; }
   .hero-spotlight-beam { max-width: 45%; }
   .brand-logo { font-size: 1.5rem; }
