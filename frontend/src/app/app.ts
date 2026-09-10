@@ -14,20 +14,6 @@ export class App {
   readonly year = new Date().getFullYear();
   private readonly router = inject(Router);
   readonly isStaffArea = signal(this.router.url.startsWith('/staff'));
-  private titleClicks = 0;
-  private lastTitleClick = 0;
-  onTitleClick(event: MouseEvent): void {
-    event.preventDefault();
-    const now = Date.now();
-    this.titleClicks = now - this.lastTitleClick > 3000 ? 1 : this.titleClicks + 1;
-    this.lastTitleClick = now;
-    if (this.titleClicks >= 8) {
-      this.titleClicks = 0;
-      void this.router.navigateByUrl('/staff');
-    } else {
-      void this.router.navigateByUrl('/');
-    }
-  }
   readonly cart = inject(CartStore);
   readonly notifications = inject(NotificationService);
 

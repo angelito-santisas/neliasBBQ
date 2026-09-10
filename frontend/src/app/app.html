@@ -1,7 +1,7 @@
 <div class="ambient-bg" aria-hidden="true"></div>
 @if (!isStaffArea()) {
 <header>
-  <a class="brand-logo" href="/" (click)="onTitleClick($event)">Nelia's BBQ</a>
+  <a class="brand-logo" routerLink="/">Nelia's BBQ</a>
   <nav aria-label="Primary navigation">
     <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
     <a class="nav-link" routerLink="/menu" routerLinkActive="active">Menu</a>

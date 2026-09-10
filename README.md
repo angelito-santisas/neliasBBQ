@@ -61,7 +61,7 @@ $env:SUPABASE_DB_PASSWORD='YOUR_PASSWORD'
 
 ### Staff login
 
-Click the Nelia's BBQ title eight times, with no more than three seconds between clicks, to open staff management. Direct access at `/staff` also requires login.
+Open `/staff/login` directly in the browser to sign in as staff (locally, `http://localhost:4200/staff/login`). You can bookmark this address. Direct access at `/staff` also requires login.
 
 Create staff accounts in Supabase Authentication and add their user UUIDs to the backend `STAFF_USER_IDS` environment variable (comma-separated). Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` as shown in `.env.example`, then restart Spring Boot. An empty staff list denies all staff access. Do not use the service-role key.
 
