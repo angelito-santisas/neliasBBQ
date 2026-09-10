@@ -3,5 +3,15 @@
   "framework": "angular",
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/frontend/browser"
+  "outputDirectory": "dist/frontend/browser",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://neliasbbq-production.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
